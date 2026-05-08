@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>視界の端</title>
+    <style>
+        :root {
+            --bg-base: #050505;
+            --text-base: #d0d0d0;
+            --accent-red: #cc0000;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-base);
+            color: var(--text-base);
+            font-family: 'Sawarabi Mincho', 'Yu Mincho', 'Hiragino Mincho ProN', 'Noto Serif JP', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: default;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* --- スタート画面 --- */
+        #start-screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-base);
+            z-index: 100;
+            transition: opacity 2s ease-in-out;
+        }
+
+        #start-screen h1 {
+            font-weight: 300;
+            letter-spacing: 0.8em;
+            margin-bottom: 1rem;
+            color: #fff;
+            margin-left: 0.4em; /* レタースペース分の補正 */
+        }
+
+        #start-screen p {
+            color: #555;
+            font-size: 0.8rem;
+            margin-bottom: 3rem;
+            letter-spacing: 0.1em;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        #start-btn {
+            background: transparent;
+            border: 1px solid #333;
+            color: #888;
+            padding: 12px 40px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.5s;
+            letter-spacing: 0.3em;
+            outline: none;
+        }
+
+        #start-btn:hover {
+            border-color: #fff;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        /* --- ストーリー画面 --- */
+        #story-screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        #message-container {
+            font-size: clamp(1.2rem, 5vw, 1.8rem);
+            line-height: 2;
+            letter-spacing: 0.15em;
+            text-align: center;
+            max-width: 85%;
+            min-height: 3rem;
+            padding: 20px;
+            position: relative;
+        }
+
+        .char {
+            opacity: 0;
+            transition: opacity 0.1s ease-in;
+        }
+
+        #click-indicator {
+            position: absolute;
+            bottom: 15%;
+            font-size: 0.8rem;
+            color: #444;
+            animation: blink 2s infinite;
+            opacity: 0;
+            transition: opacity 0.5s;
+            letter-spacing: 0.1em;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        #tutorial {
+            position: absolute;
+            bottom: 10%;
+            font-size: 0.7rem;
+            color: #333;
+            letter-spacing: 0.2em;
+            opacity: 0;
+            transition: opacity 1s;
+        }
+
+        /* --- 演出用CSSクラス --- */
+        .shake {
+            animation: shake-anim 0.5s infinite;
+        }
+
+        .shake-heavy {
+            animation: shake-heavy-anim 0.1s infinite;
+        }
+
+        @keyframes shake-anim {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            20% { transform: translate(-1px, -2px) rotate(-1deg); }
+            40% { transform: translate(-2px, 0px) rotate(1deg); }
+            60% { transform: translate(2px, 2px) rotate(0deg); }
+            80% { transform: translate(1px, -1px) rotate(1deg); }
+            100% { transform: translate(-1px, 1px) rotate(-1deg); }
+        }
+
+        @keyframes shake-heavy-anim {
+            0% { transform: translate(3px, 3px) rotate(0deg); }
+            25% { transform: translate(-4px, -3px) rotate(-2deg); }
+            50% { transform: translate(-3px, 4px) rotate(2deg); }
+            75% { transform: translate(4px, -4px) rotate(-1deg); }
+            100% { transform: translate(-3px, 3px) rotate(1deg); }
+        }
+
+        .flicker {
+            animation: flicker-anim 0.15s infinite alternate;
+        }
+
+        @keyframes flicker-anim {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 0.9; }
+        }
+
+        .glitch {
+            position: relative;
+        }
+        .glitch::before, .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-base);
+            opacity: 0.8;
+        }
+        .glitch::before {
+            left: 2px;
+            text-shadow: -1px 0 rgba(255,0,0,0.7);
+            animation: glitch-clip 2s infinite linear alternate-reverse;
+        }
+        .glitch::after {
+            left: -2px;
+            text-shadow: -1px 0 rgba(0,0,255,0.7);
+            animation: glitch-clip 2.5s infinite linear alternate-reverse;
+        }
+
+        .glitch_heavy {
+            position: relative;
+            color: var(--accent-red) !important;
+            font-size: clamp(1.5rem, 6vw, 2.5rem) !important;
+            font-weight: bold;
+            transform: scale(1.1);
+        }
+        .glitch_heavy::before, .glitch_heavy::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+        }
+        .glitch_heavy::before {
+            left: 4px;
+            text-shadow: -2px 0 red;
+            animation: glitch-clip 0.1s infinite linear alternate-reverse;
+        }
+        .glitch_heavy::after {
+            left: -4px;
+            text-shadow: 2px 0 blue;
+            animation: glitch-clip 0.15s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-clip {
+            0% { clip-path: inset(10% 0 80% 0); transform: translate(-2px, 2px); }
+            20% { clip-path: inset(80% 0 10% 0); transform: translate(2px, -2px); }
+            40% { clip-path: inset(30% 0 50% 0); transform: translate(2px, 2px); }
+            60% { clip-path: inset(50% 0 30% 0); transform: translate(-2px, -2px); }
+            80% { clip-path: inset(5% 0 90% 0); transform: translate(2px, -2px); }
+            100% { clip-path: inset(90% 0 5% 0); transform: translate(-2px, 2px); }
+        }
+
+        .blood {
+            color: var(--accent-red) !important;
+            font-size: clamp(2rem, 8vw, 4rem) !important;
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+            animation: drip 3s infinite ease-in-out;
+        }
+
+        @keyframes drip {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(5px); }
+        }
+
+        /* --- ジャンプスケア画面 --- */
+        #jumpscare-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 1000;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #scare-content {
+            width: 100%;
+            height: 100%;
+            background-color: #200000;
+            animation: scare-flash 0.1s infinite;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes scare-flash {
+            0% { filter: invert(0) contrast(1.5) hue-rotate(0deg); }
+            50% { filter: invert(1) contrast(3) hue-rotate(90deg); }
+            100% { filter: invert(0) contrast(2) hue-rotate(0deg); }
+        }
+
+        .scare-svg {
+            width: 120%;
+            height: 120%;
+            animation: scare-zoom 0.2s infinite alternate;
+        }
+
+        @keyframes scare-zoom {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.1) rotate(2deg); }
+        }
+
+        .cursor-none {
+            cursor: none !important;
+        }
+
+        /* --- 新規追加エフェクト --- */
+        #vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, transparent 60%, rgba(0,0,0,0.8) 100%);
+            z-index: 50;
+            pointer-events: none;
+            transition: background 3s ease-in-out;
+        }
+
+        .dark-mode #vignette {
+            background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.98) 100%);
+        }
+
+        .dark-text {
+            color: #444 !important;
+            text-shadow: 0 0 5px rgba(0,0,0,0.8);
+        }
+        
+        .pulse {
+            animation: pulse-anim 2s infinite alternate;
+        }
+        
+        @keyframes pulse-anim {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.8; transform: scale(1.02); text-shadow: 0 0 10px rgba(200,0,0,0.3); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="vignette"></div>
+
+    <div id="start-screen">
+        <h1>視界の端</h1>
+        <p>※音量にご注意ください。<br>ヘッドフォンまたはイヤホンの着用を推奨します。</p>
+        <button id="start-btn">覗き込む</button>
+    </div>
+
+    <div id="story-screen" class="hidden">
+        <div id="message-container"></div>
+        <div id="click-indicator">▼</div>
+        <div id="tutorial">タップして次へ</div>
+    </div>
+
+    <div id="jumpscare-screen" class="hidden">
+        <div id="scare-content">
+            <svg viewBox="0 0 100 100" class="scare-svg" preserveAspectRatio="none">
+                <rect width="100" height="100" fill="#050000" />
+                <!-- 闇に浮かぶ歪んだ顔のシルエット -->
+                <path d="M 15 10 C 5 30, 5 70, 25 95 C 50 110, 75 95, 85 70 C 95 40, 85 15, 60 5 C 40 -5, 25 0, 15 10 Z" fill="#000" filter="blur(1px)"/>
+                <!-- 虚ろな目 -->
+                <ellipse cx="30" cy="35" rx="8" ry="12" fill="#0a0a0a" />
+                <ellipse cx="70" cy="38" rx="7" ry="11" fill="#0a0a0a" />
+                <circle cx="30" cy="35" r="1.5" fill="#fff" opacity="0.4"/>
+                <!-- 異様に開いた口と歯 -->
+                <path d="M 30 65 Q 50 50 70 65 Q 60 95 40 90 Z" fill="#1a0000" />
+                <path d="M 32 65 L 38 75 L 45 65 L 50 80 L 55 65 L 62 76 L 68 66" stroke="#444" fill="none" stroke-width="1.5" filter="blur(0.5px)"/>
+            </svg>
+        </div>
+    </div>
+
+    <script>
+        // --- Web Audio API サウンドシステム ---
+        let audioCtx;
+        let currentDrone = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // タイプライターのような小さなカチッという音
+        function playTypeSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.03);
+            
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.03);
+        }
+
+        // 不気味な低音（うなり）
+        function playLowDrone() {
+            if (!audioCtx) return null;
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc1.type = 'sine';
+            osc2.type = 'sine';
+            osc1.frequency.setValueAtTime(40, audioCtx.currentTime); // より低く圧迫感のある音へ
+            osc2.frequency.setValueAtTime(41.5, audioCtx.currentTime); // うなりをゆっくりに
+            
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 5);
+            
+            osc1.start();
+            osc2.start();
+            return { osc1, osc2, gain };
+        }
+
+        // 高音の耳鳴り（後半用）
+        function playTinnitus() {
+            if (!audioCtx) return null;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(8000, audioCtx.currentTime);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 8);
+            
+            osc.start();
+            return { osc, gain };
+        }
+        
+        let currentTinnitus = null;
+
+        // ジャンプスケア時の爆音
+        function playScream() {
+            if (!audioCtx) return;
+            
+            // ノイズバースト
+            const bufferSize = audioCtx.sampleRate * 1.5; 
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(1.5, audioCtx.currentTime); 
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+
+            noise.connect(gain);
+            gain.connect(audioCtx.destination);
+            noise.start();
+            
+            // 高音の耳障りな音
+            const osc = audioCtx.createOscillator();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(1500, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 1.0);
+            
+            const oscGain = audioCtx.createGain();
+            oscGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            oscGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.0);
+            
+            osc.connect(oscGain);
+            oscGain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 1.2);
+        }
+
+        // --- シナリオデータ ---
+        const scenario = [
+            { text: "……気づいてた？" },
+            { text: "人間の目って、正面より「視界の端」のほうが、" },
+            { text: "動くものに敏感に反応するようにできてるんだって。" },
+            { text: "大昔、外敵から身を守るための本能の名残らしいよ。" },
+            { text: "でもね、" },
+            { text: "今の安全な部屋の中で、" },
+            { text: "ふと視界の端をサッと横切る『黒い影』、" },
+            { text: "あれって、本当にただの「目の錯覚」だと思う？" },
+            { text: "……", speed: "slow" },
+            { text: "人間の脳ってすごく優秀でさ、", drone: true },
+            { text: "理解できないものや、直視したら狂ってしまうものを、" },
+            { text: "無意識に「見えない」ようにフィルターをかけてるんだって。" },
+            { text: "だから、視界の端っこ、" },
+            { text: "そのフィルターが一番薄い部分にだけ、" },
+            { text: "一瞬だけ『それ』が映り込んじゃうらしいの。" },
+            { text: "ねえ、", effect: "flicker" },
+            { text: "今、部屋の中で一人？", effect: "pulse" },
+            { text: "さっきから、", effect: "dark-text" },
+            { text: "あなたの左側の暗がり、", effect: "dark-text", speed: "slow" },
+            { text: "何か、もぞもぞ動いてない？", effect: "shake", tinnitus: true },
+            { text: "……見ないほうがいいよ。", speed: "slow" },
+            { text: "『それ』はね、", effect: "pulse" },
+            { text: "こっちが気づいたことに気づくと、" },
+            { text: "一気に距離を詰めてくるから。", speed: "slow", effect: "glitch" },
+            { text: "ほら", speed: "fast", effect: "glitch_heavy" },
+            { text: "すぐ、うしろ", speed: "fast", effect: "blood" },
+            { jumpscare: true },
+            { text: "ふりむいたね", speed: "slow", effect: "blood", end: true }
+        ];
+
+        // --- ゲーム進行ロジック ---
+        let currentIndex = -1;
+        let isTyping = false;
+        let typeInterval;
+        let isStarted = false;
+        let isLocked = false;
+        let tutorialShown = false;
+
+        const startBtn = document.getElementById('start-btn');
+        const startScreen = document.getElementById('start-screen');
+        const storyScreen = document.getElementById('story-screen');
+        const msgContainer = document.getElementById('message-container');
+        const indicator = document.getElementById('click-indicator');
+        const tutorial = document.getElementById('tutorial');
+
+        startBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            initAudio();
+            
+            startScreen.style.opacity = '0';
+            setTimeout(() => {
+                startScreen.classList.add('hidden');
+                storyScreen.classList.remove('hidden');
+                isStarted = true;
+                
+                // チュートリアル表示
+                setTimeout(() => {
+                    if(!tutorialShown && currentIndex === 0) {
+                        tutorial.style.opacity = '1';
+                    }
+                }, 3000);
+
+                nextScenario();
+            }, 2000);
+        });
+
+        function handleInteraction() {
+            if (!isStarted || isLocked) return;
+
+            if (isTyping) {
+                // タイピング中のスキップ処理
+                clearInterval(typeInterval);
+                const chars = document.querySelectorAll('.char');
+                chars.forEach(c => c.style.opacity = '1');
+                isTyping = false;
+                indicator.style.opacity = '1';
+                return;
+            }
+
+            if (!tutorialShown) {
+                tutorial.style.opacity = '0';
+                tutorialShown = true;
+            }
+
+            nextScenario();
+        }
+
+        document.addEventListener('click', handleInteraction);
+        document.addEventListener('touchstart', (e) => {
+            if (e.target.id !== 'start-btn') {
+                handleInteraction();
+            }
+        });
+
+        function nextScenario() {
+            currentIndex++;
+            if (currentIndex >= scenario.length) return;
+
+            const data = scenario[currentIndex];
+            
+            if (data.jumpscare) {
+                triggerJumpscare();
+                return;
+            }
+
+            applyEffects(data);
+            typeText(data.text, data.speed);
+        }
+
+        function applyEffects(data) {
+            // エフェクトリセット
+            document.body.className = '';
+            msgContainer.className = '';
+            
+            if (data.effect === 'shake') {
+                document.body.classList.add('shake');
+            } else if (data.effect === 'flicker') {
+                document.body.classList.add('flicker');
+            } else if (data.effect === 'glitch') {
+                msgContainer.classList.add('glitch');
+            } else if (data.effect === 'glitch_heavy') {
+                msgContainer.classList.add('glitch_heavy');
+                document.body.classList.add('shake-heavy');
+                document.body.classList.add('dark-mode'); // 背景も暗く
+                if (currentDrone) {
+                    currentDrone.gain.gain.linearRampToValueAtTime(1.0, audioCtx.currentTime + 0.5);
+                }
+            } else if (data.effect === 'blood') {
+                msgContainer.classList.add('blood');
+                document.body.classList.add('dark-mode');
+            } else if (data.effect === 'dark-text') {
+                msgContainer.classList.add('dark-text');
+                document.body.classList.add('dark-mode'); // 視界が狭まる
+            } else if (data.effect === 'pulse') {
+                msgContainer.classList.add('pulse');
+            }
+
+            // サウンドトリガー
+            if (data.drone && !currentDrone) {
+                currentDrone = playLowDrone();
+            }
+            if (data.tinnitus && !currentTinnitus) {
+                currentTinnitus = playTinnitus();
+            }
+
+            // エンド処理
+            if (data.end) {
+                isLocked = true; // 進行ロック
+                document.body.classList.add('cursor-none');
+                indicator.style.display = 'none';
+            }
+        }
+
+        function typeText(text, speedType) {
+            msgContainer.innerHTML = '';
+            msgContainer.setAttribute('data-text', text); // グリッチ用
+
+            const chars = text.split('');
+            chars.forEach(char => {
+                const span = document.createElement('span');
+                span.textContent = char;
+                span.className = 'char';
+                msgContainer.appendChild(span);
+            });
+
+            isTyping = true;
+            indicator.style.opacity = '0';
+
+            let baseSpeed = 80;
+            if (speedType === 'slow') baseSpeed = 200;
+            if (speedType === 'fast') baseSpeed = 40;
+
+            let i = 0;
+            const spans = document.querySelectorAll('.char');
+            
+            typeInterval = setInterval(() => {
+                if (i < spans.length) {
+                    spans[i].style.opacity = '1';
+                    playTypeSound();
+                    i++;
+                } else {
+                    clearInterval(typeInterval);
+                    isTyping = false;
+                    if (!scenario[currentIndex].end) {
+                        indicator.style.opacity = '1';
+                    }
+                }
+            }, baseSpeed);
+        }
+
+        function triggerJumpscare() {
+            isLocked = true;
+            indicator.style.opacity = '0';
+            document.body.classList.add('cursor-none');
+
+            // 静寂を作る
+            if (currentDrone) {
+                currentDrone.gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+                setTimeout(() => {
+                    currentDrone.osc1.stop();
+                    currentDrone.osc2.stop();
+                }, 150);
+            }
+            if (currentTinnitus) {
+                currentTinnitus.gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+                setTimeout(() => {
+                    currentTinnitus.osc.stop();
+                }, 150);
+            }
+
+            // 0.6秒の「間」の後に演出
+            setTimeout(() => {
+                playScream();
+                const jsScreen = document.getElementById('jumpscare-screen');
+                jsScreen.classList.remove('hidden');
+                
+                // 0.8秒で消える
+                setTimeout(() => {
+                    jsScreen.classList.add('hidden');
+                    document.body.className = ''; // 揺れ等リセット
+                    
+                    // 少し間を置いて最後のテキストへ
+                    setTimeout(() => {
+                        isLocked = false;
+                        nextScenario();
+                    }, 1000);
+                }, 800);
+            }, 600);
+        }
+
+    </script>
+</body>
+</html>
