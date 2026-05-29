@@ -6,9 +6,9 @@
     <title>視界の端</title>
     <style>
         :root {
-            --bg-base: #050505;
+            --bg-base: #010101;
             --text-base: #d0d0d0;
-            --accent-red: #cc0000;
+            --accent-red: #8a0000;
         }
 
         body, html {
@@ -19,9 +19,6 @@
             background-color: var(--bg-base);
             color: var(--text-base);
             font-family: 'Sawarabi Mincho', 'Yu Mincho', 'Hiragino Mincho ProN', 'Noto Serif JP', serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
@@ -32,7 +29,123 @@
             display: none !important;
         }
 
-        /* --- スタート画面 --- */
+        /* --- 背景・環境エフェクト --- */
+        #bg-layer {
+            position: absolute;
+            inset: -5%;
+            width: 110%;
+            height: 110%;
+            z-index: 1;
+            opacity: 0.1;
+            transition: opacity 10s, filter 5s;
+            filter: grayscale(100%) contrast(150%) blur(3px);
+            pointer-events: none;
+        }
+
+        #bg-layer img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            animation: slow-zoom 40s linear infinite alternate;
+        }
+
+        /* 走査線ノイズ */
+        #scanlines {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent,
+                transparent 3px,
+                rgba(0, 0, 0, 0.4) 3px,
+                rgba(0, 0, 0, 0.4) 6px
+            );
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        /* ブラウン管風のノイズ */
+        #static-noise {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.1"/%3E%3C/svg%3E');
+            pointer-events: none;
+            opacity: 0.2;
+        }
+
+        #vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.98) 100%);
+            z-index: 4;
+            pointer-events: none;
+            transition: background 3s ease-in-out;
+        }
+
+        /* --- 視界の左端の影 --- */
+        #left-shadow-container {
+            position: absolute;
+            top: 0;
+            left: -15vw;
+            width: 50vw;
+            height: 100%;
+            z-index: 5;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 4s, left 15s ease-in;
+            filter: blur(15px);
+        }
+
+        .creeping #left-shadow-container {
+            opacity: 0.5;
+            left: -8vw;
+        }
+
+        .close #left-shadow-container {
+            opacity: 0.9;
+            left: -2vw;
+            filter: blur(5px);
+        }
+
+        .shadow-blob {
+            fill: #000;
+            animation: morph 3s ease-in-out infinite alternate, shake-slight 0.05s infinite;
+        }
+
+        /* 画面上部の血の手形（終盤に表示） */
+        #bloody-handprint {
+            position: absolute;
+            top: 10%;
+            right: 15%;
+            width: 200px;
+            height: 200px;
+            z-index: 6;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+            filter: drop-shadow(0 0 10px #f00);
+        }
+
+        @keyframes morph {
+            0% { transform: scale(1) skewX(0deg); }
+            50% { transform: scale(1.1, 0.9) skewX(5deg) translateY(20px); }
+            100% { transform: scale(0.9, 1.1) skewX(-5deg) translateY(-20px); }
+        }
+
+        @keyframes shake-slight {
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-1px, -1px); }
+            100% { transform: translate(1px, -1px); }
+        }
+
+        @keyframes slow-zoom {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.15); }
+        }
+
+        /* --- UI要素 --- */
         #start-screen {
             position: absolute;
             inset: 0;
@@ -40,7 +153,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background-color: var(--bg-base);
+            background-color: #000;
             z-index: 100;
             transition: opacity 2s ease-in-out;
         }
@@ -50,7 +163,7 @@
             letter-spacing: 0.8em;
             margin-bottom: 1rem;
             color: #fff;
-            margin-left: 0.4em; /* レタースペース分の補正 */
+            margin-left: 0.4em;
         }
 
         #start-screen p {
@@ -81,7 +194,6 @@
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
         }
 
-        /* --- ストーリー画面 --- */
         #story-screen {
             position: absolute;
             inset: 0;
@@ -101,6 +213,8 @@
             min-height: 3rem;
             padding: 20px;
             position: relative;
+            text-shadow: 0 0 8px rgba(0,0,0,1), 0 0 15px rgba(0,0,0,1);
+            transition: color 2s, text-shadow 2s;
         }
 
         .char {
@@ -112,7 +226,7 @@
             position: absolute;
             bottom: 15%;
             font-size: 0.8rem;
-            color: #444;
+            color: #555;
             animation: blink 2s infinite;
             opacity: 0;
             transition: opacity 0.5s;
@@ -124,125 +238,136 @@
             50% { opacity: 1; }
         }
 
-        #tutorial {
+        /* --- フェイク・カメラアクセスダイアログ --- */
+        #fake-dialog-overlay {
             position: absolute;
-            bottom: 10%;
-            font-size: 0.7rem;
+            inset: 0;
+            z-index: 200;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 15%;
+            background-color: rgba(0,0,0,0.5); /* 画面を少し暗くする */
+        }
+
+        .fake-dialog {
+            background-color: #fff;
             color: #333;
-            letter-spacing: 0.2em;
-            opacity: 0;
-            transition: opacity 1s;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            border-radius: 8px;
+            padding: 20px;
+            width: 320px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
-        /* --- 演出用CSSクラス --- */
-        .shake {
-            animation: shake-anim 0.5s infinite;
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
         }
 
+        .fake-dialog p {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .fake-dialog .cam-icon {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .fake-dialog .cam-icon svg {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            fill: #666;
+        }
+
+        .dialog-btns {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .dialog-btns button {
+            background: none;
+            border: 1px solid #ccc;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            transition: background 0.2s;
+        }
+
+        .dialog-btns button.allow {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .dialog-btns button:hover {
+            background-color: #f0f0f0;
+        }
+        .dialog-btns button.allow:hover {
+            background-color: #0056b3;
+        }
+
+
+        /* --- 恐怖演出用クラス --- */
         .shake-heavy {
-            animation: shake-heavy-anim 0.1s infinite;
-        }
-
-        @keyframes shake-anim {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            20% { transform: translate(-1px, -2px) rotate(-1deg); }
-            40% { transform: translate(-2px, 0px) rotate(1deg); }
-            60% { transform: translate(2px, 2px) rotate(0deg); }
-            80% { transform: translate(1px, -1px) rotate(1deg); }
-            100% { transform: translate(-1px, 1px) rotate(-1deg); }
-        }
-
-        @keyframes shake-heavy-anim {
-            0% { transform: translate(3px, 3px) rotate(0deg); }
-            25% { transform: translate(-4px, -3px) rotate(-2deg); }
-            50% { transform: translate(-3px, 4px) rotate(2deg); }
-            75% { transform: translate(4px, -4px) rotate(-1deg); }
-            100% { transform: translate(-3px, 3px) rotate(1deg); }
-        }
-
-        .flicker {
-            animation: flicker-anim 0.15s infinite alternate;
-        }
-
-        @keyframes flicker-anim {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 0.9; }
-        }
-
-        .glitch {
-            position: relative;
-        }
-        .glitch::before, .glitch::after {
-            content: attr(data-text);
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg-base);
-            opacity: 0.8;
-        }
-        .glitch::before {
-            left: 2px;
-            text-shadow: -1px 0 rgba(255,0,0,0.7);
-            animation: glitch-clip 2s infinite linear alternate-reverse;
-        }
-        .glitch::after {
-            left: -2px;
-            text-shadow: -1px 0 rgba(0,0,255,0.7);
-            animation: glitch-clip 2.5s infinite linear alternate-reverse;
+            animation: shake-heavy-anim 0.05s infinite;
         }
 
         .glitch_heavy {
-            position: relative;
             color: var(--accent-red) !important;
-            font-size: clamp(1.5rem, 6vw, 2.5rem) !important;
+            font-size: clamp(1.5rem, 7vw, 3rem) !important;
             font-weight: bold;
             transform: scale(1.1);
         }
-        .glitch_heavy::before, .glitch_heavy::after {
-            content: attr(data-text);
+
+        .blood-text {
+            color: #ff0000 !important;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.8), 0 0 20px rgba(255,0,0,0.5) !important;
+        }
+
+        .heartbeat-bg {
+            animation: heartbeat-pulse 0.8s infinite;
+        }
+
+        @keyframes heartbeat-pulse {
+            0% { background-color: rgba(20, 0, 0, 0.8); }
+            20% { background-color: rgba(60, 0, 0, 0.95); }
+            40% { background-color: rgba(20, 0, 0, 0.8); }
+            100% { background-color: rgba(5, 0, 0, 0.9); }
+        }
+
+        /* --- サブリミナル & ジャンプスケア --- */
+        #subliminal-screen {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: transparent;
+            inset: 0;
+            z-index: 500;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
         }
-        .glitch_heavy::before {
-            left: 4px;
-            text-shadow: -2px 0 red;
-            animation: glitch-clip 0.1s infinite linear alternate-reverse;
-        }
-        .glitch_heavy::after {
-            left: -4px;
-            text-shadow: 2px 0 blue;
-            animation: glitch-clip 0.15s infinite linear alternate-reverse;
+        
+        .flash {
+            animation: flash-anim 0.08s forwards;
         }
 
-        @keyframes glitch-clip {
-            0% { clip-path: inset(10% 0 80% 0); transform: translate(-2px, 2px); }
-            20% { clip-path: inset(80% 0 10% 0); transform: translate(2px, -2px); }
-            40% { clip-path: inset(30% 0 50% 0); transform: translate(2px, 2px); }
-            60% { clip-path: inset(50% 0 30% 0); transform: translate(-2px, -2px); }
-            80% { clip-path: inset(5% 0 90% 0); transform: translate(2px, -2px); }
-            100% { clip-path: inset(90% 0 5% 0); transform: translate(-2px, 2px); }
+        @keyframes flash-anim {
+            0% { opacity: 1; filter: invert(0); }
+            50% { opacity: 1; filter: invert(1); }
+            100% { opacity: 0; filter: invert(0); }
         }
 
-        .blood {
-            color: var(--accent-red) !important;
-            font-size: clamp(2rem, 8vw, 4rem) !important;
-            text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
-            animation: drip 3s infinite ease-in-out;
-        }
-
-        @keyframes drip {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(5px); }
-        }
-
-        /* --- ジャンプスケア画面 --- */
         #jumpscare-screen {
             position: absolute;
             inset: 0;
@@ -251,105 +376,179 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow: hidden;
         }
 
         #scare-content {
             width: 100%;
             height: 100%;
-            background-color: #200000;
-            animation: scare-flash 0.1s infinite;
+            background-color: #400000;
+            animation: scare-flash 0.03s infinite;
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
         @keyframes scare-flash {
-            0% { filter: invert(0) contrast(1.5) hue-rotate(0deg); }
-            50% { filter: invert(1) contrast(3) hue-rotate(90deg); }
-            100% { filter: invert(0) contrast(2) hue-rotate(0deg); }
+            0% { filter: invert(0) contrast(2) hue-rotate(0deg); transform: translate(10px, 10px) scale(1); }
+            50% { filter: invert(1) contrast(4) hue-rotate(90deg); transform: translate(-10px, -10px) scale(1.2); }
+            100% { filter: invert(0) contrast(3) hue-rotate(180deg); transform: translate(10px, -10px) scale(1); }
         }
 
         .scare-svg {
-            width: 120%;
-            height: 120%;
-            animation: scare-zoom 0.2s infinite alternate;
+            width: 200%;
+            height: 200%;
+            animation: scare-zoom 0.05s infinite alternate;
         }
 
         @keyframes scare-zoom {
             0% { transform: scale(1) rotate(0deg); }
-            100% { transform: scale(1.1) rotate(2deg); }
+            100% { transform: scale(1.3) rotate(5deg); }
+        }
+
+        /* エンド画面の狂気テキスト */
+        #madness-text {
+            position: absolute;
+            inset: 0;
+            z-index: 999;
+            color: #900;
+            font-size: 1.5rem;
+            font-weight: bold;
+            line-height: 1;
+            overflow: hidden;
+            word-wrap: break-word;
+            pointer-events: none;
+            opacity: 0;
         }
 
         .cursor-none {
             cursor: none !important;
         }
-
-        /* --- 新規追加エフェクト --- */
-        #vignette {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle, transparent 60%, rgba(0,0,0,0.8) 100%);
-            z-index: 50;
-            pointer-events: none;
-            transition: background 3s ease-in-out;
-        }
-
-        .dark-mode #vignette {
-            background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.98) 100%);
-        }
-
-        .dark-text {
-            color: #444 !important;
-            text-shadow: 0 0 5px rgba(0,0,0,0.8);
-        }
-        
-        .pulse {
-            animation: pulse-anim 2s infinite alternate;
-        }
-        
-        @keyframes pulse-anim {
-            0% { opacity: 1; transform: scale(1); }
-            100% { opacity: 0.8; transform: scale(1.02); text-shadow: 0 0 10px rgba(200,0,0,0.3); }
-        }
     </style>
 </head>
 <body>
 
+    <!-- 背景・環境 -->
+    <div id="bg-layer">
+        <!-- 廃墟の廊下 -->
+        <img src="https://images.unsplash.com/photo-1519659972304-20b72808c4cb?q=80&w=1920&auto=format&fit=crop" 
+             onerror="this.style.display='none'" alt="creepy corridor">
+    </div>
+    <div id="static-noise"></div>
+    <div id="scanlines"></div>
     <div id="vignette"></div>
 
+    <!-- 左端に蠢く影 -->
+    <div id="left-shadow-container">
+        <svg viewBox="0 0 100 200" preserveAspectRatio="none" style="width:100%; height:100%;">
+            <path class="shadow-blob" d="M 0,0 C 60,30 90,70 80,120 C 70,170 30,190 0,200 Z" />
+            <path class="shadow-blob" d="M 0,40 C 50,60 70,100 60,150 C 50,190 10,195 0,200 Z" style="animation-delay: -1.5s;" />
+            <!-- 無数の手 -->
+            <path d="M 0,60 Q 90,80 110,60" stroke="#000" stroke-width="4" fill="none" class="shadow-blob"/>
+            <path d="M 0,110 Q 80,120 100,140" stroke="#000" stroke-width="3" fill="none" class="shadow-blob" style="animation-delay: -2s;"/>
+            <path d="M 0,160 Q 60,150 90,170" stroke="#000" stroke-width="2" fill="none" class="shadow-blob" style="animation-delay: -0.5s;"/>
+        </svg>
+    </div>
+
+    <!-- 血の手形 -->
+    <div id="bloody-handprint">
+        <svg viewBox="0 0 100 100" fill="#a00">
+            <path d="M40,20 C42,10 48,10 50,20 L55,45 C60,30 65,30 68,45 L70,55 C75,45 80,45 82,55 L82,65 C85,60 90,60 90,70 L85,85 C75,95 65,100 50,100 C30,100 25,85 25,80 L20,70 C15,65 15,60 20,55 L25,65 L25,45 C22,35 28,35 30,45 L35,60 L40,20 Z" filter="blur(1px)"/>
+            <path d="M45,100 L45,120 M55,100 L58,115 M35,95 L30,110" stroke="#a00" stroke-width="2" fill="none" filter="blur(1px)"/>
+        </svg>
+    </div>
+
+    <!-- スタート画面 -->
     <div id="start-screen">
         <h1>視界の端</h1>
-        <p>※音量にご注意ください。<br>ヘッドフォンまたはイヤホンの着用を推奨します。</p>
+        <p>※ホラー要素、大きな音、フラッシュ表現、システムエラーを模した演出が含まれます。<br>ヘッドフォンを着用し、部屋を暗くしてプレイしてください。</p>
         <button id="start-btn">覗き込む</button>
     </div>
 
+    <!-- ストーリー画面 -->
     <div id="story-screen" class="hidden">
         <div id="message-container"></div>
         <div id="click-indicator">▼</div>
-        <div id="tutorial">タップして次へ</div>
     </div>
 
-    <div id="jumpscare-screen" class="hidden">
-        <div id="scare-content">
-            <svg viewBox="0 0 100 100" class="scare-svg" preserveAspectRatio="none">
-                <rect width="100" height="100" fill="#050000" />
-                <!-- 闇に浮かぶ歪んだ顔のシルエット -->
-                <path d="M 15 10 C 5 30, 5 70, 25 95 C 50 110, 75 95, 85 70 C 95 40, 85 15, 60 5 C 40 -5, 25 0, 15 10 Z" fill="#000" filter="blur(1px)"/>
-                <!-- 虚ろな目 -->
-                <ellipse cx="30" cy="35" rx="8" ry="12" fill="#0a0a0a" />
-                <ellipse cx="70" cy="38" rx="7" ry="11" fill="#0a0a0a" />
-                <circle cx="30" cy="35" r="1.5" fill="#fff" opacity="0.4"/>
-                <!-- 異様に開いた口と歯 -->
-                <path d="M 30 65 Q 50 50 70 65 Q 60 95 40 90 Z" fill="#1a0000" />
-                <path d="M 32 65 L 38 75 L 45 65 L 50 80 L 55 65 L 62 76 L 68 66" stroke="#444" fill="none" stroke-width="1.5" filter="blur(0.5px)"/>
-            </svg>
+    <!-- フェイクダイアログ (JSで表示制御) -->
+    <div id="fake-dialog-overlay" class="hidden">
+        <div class="fake-dialog">
+            <p><strong>このサイト</strong> が次の許可を求めています：</p>
+            <div class="cam-icon">
+                <svg viewBox="0 0 24 24"><path d="M15 12c0 1.654-1.346 3-3 3s-3-1.346-3-3 1.346-3 3-3 3 1.346 3 3zm9-.449s-4.252 8.449-11.985 8.449c-7.18 0-12.015-8.449-12.015-8.449s4.446-7.551 12.015-7.551c7.694 0 11.985 7.551 11.985 7.551zm-7 .449c0-2.757-2.243-5-5-5s-5 2.243-5 5 2.243 5 5 5 5-2.243 5-5z"/></svg>
+                あなたのデバイスのカメラを使用する
+            </div>
+            <div class="dialog-btns">
+                <button id="fake-block">ブロック</button>
+                <button id="fake-allow" class="allow">許可</button>
+            </div>
         </div>
     </div>
 
+    <!-- サブリミナル画面 -->
+    <div id="subliminal-screen">
+        <svg viewBox="0 0 100 100" style="width:90vmin; height:90vmin;">
+            <!-- おぞましい目 -->
+            <rect width="100" height="100" fill="#000" />
+            <ellipse cx="50" cy="50" rx="48" ry="20" fill="#fff" />
+            <circle cx="50" cy="50" r="18" fill="#800" />
+            <circle cx="50" cy="50" r="5" fill="#000" />
+            <!-- 無数の血管 -->
+            <path d="M 10,50 Q 30,40 40,50 Q 30,60 10,50" stroke="#f00" fill="none" stroke-width="0.5"/>
+            <path d="M 90,50 Q 70,45 60,50 Q 70,55 90,50" stroke="#f00" fill="none" stroke-width="0.5"/>
+        </svg>
+    </div>
+
+    <!-- ジャンプスケア画面 -->
+    <div id="jumpscare-screen" class="hidden">
+        <div id="scare-content">
+            <svg viewBox="0 0 100 100" class="scare-svg" preserveAspectRatio="xMidYMid slice">
+                <rect width="100" height="100" fill="#000" />
+                <!-- 人間ではない何か -->
+                <path d="M 5 -10 C -10 40, 0 80, 25 110 C 60 130, 90 100, 105 70 C 115 30, 95 -10, 50 -20 Z" fill="#111" filter="blur(1px)"/>
+                
+                <!-- 巨大で空洞の目 -->
+                <ellipse cx="25" cy="30" rx="15" ry="25" fill="#000" stroke="#400" stroke-width="2"/>
+                <circle cx="25" cy="30" r="2" fill="#fff" opacity="0.8"/>
+                
+                <ellipse cx="75" cy="35" rx="12" ry="20" fill="#000" stroke="#400" stroke-width="2"/>
+                <circle cx="75" cy="35" r="2" fill="#fff" opacity="0.8"/>
+
+                <!-- 顎が外れた口 -->
+                <path d="M 10 65 Q 50 50 90 70 Q 100 120 50 120 Q 0 110 10 65 Z" fill="#200" />
+                
+                <!-- 無数の鋭い牙 -->
+                <path d="M 15 67 L 22 85 L 28 65 L 35 90 L 42 63 L 50 95 L 58 63 L 65 90 L 72 65 L 78 85 L 85 68" fill="#fff" stroke="#500" stroke-width="1"/>
+                <path d="M 15 105 L 25 90 L 32 110 L 40 85 L 50 115 L 60 85 L 68 110 L 75 90 L 85 100" fill="#fff" stroke="#500" stroke-width="1"/>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- エンド時の狂気テキスト用コンテナ -->
+    <div id="madness-text"></div>
+
     <script>
-        // --- Web Audio API サウンドシステム ---
+        // --- 現実の時刻を取得してテキストを生成 ---
+        const hour = new Date().getHours();
+        let timeText = "";
+        if (hour >= 23 || hour <= 3) {
+            timeText = "こんな深夜に、";
+        } else if (hour >= 4 && hour <= 6) {
+            timeText = "こんな明け方に、";
+        } else if (hour >= 7 && hour <= 11) {
+            timeText = "こんな朝から、";
+        } else if (hour >= 12 && hour <= 17) {
+            timeText = "こんな真っ昼間に、";
+        } else {
+            timeText = "こんな夜に、";
+        }
+
+        // --- Web Audio API システム ---
         let audioCtx;
         let currentDrone = null;
+        let heartbeatInterval = null;
+        let footstepInterval = null;
 
         function initAudio() {
             if (!audioCtx) {
@@ -360,14 +559,13 @@
             }
         }
 
-        // タイプライターのような小さなカチッという音
         function playTypeSound() {
             if (!audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.03);
+            osc.type = 'square'; // タイピング音を少し硬く不気味に
+            osc.frequency.setValueAtTime(400 + Math.random()*100, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.03);
             
             gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
@@ -378,91 +576,180 @@
             osc.stop(audioCtx.currentTime + 0.03);
         }
 
-        // 不気味な低音（うなり）
         function playLowDrone() {
             if (!audioCtx) return null;
             const osc1 = audioCtx.createOscillator();
-            const osc2 = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            
             osc1.type = 'sine';
-            osc2.type = 'sine';
-            osc1.frequency.setValueAtTime(40, audioCtx.currentTime); // より低く圧迫感のある音へ
-            osc2.frequency.setValueAtTime(41.5, audioCtx.currentTime); // うなりをゆっくりに
-            
+            osc1.frequency.setValueAtTime(35, audioCtx.currentTime); // ギリギリ聞こえる重低音
             osc1.connect(gain);
-            osc2.connect(gain);
             gain.connect(audioCtx.destination);
-            
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 5);
-            
+            gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 10);
             osc1.start();
-            osc2.start();
-            return { osc1, osc2, gain };
+            return { osc1, gain };
         }
 
-        // 高音の耳鳴り（後半用）
-        function playTinnitus() {
-            if (!audioCtx) return null;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(8000, audioCtx.currentTime);
-            
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 8);
-            
-            osc.start();
-            return { osc, gain };
-        }
-        
-        let currentTinnitus = null;
-
-        // ジャンプスケア時の爆音
-        function playScream() {
+        function playGlitchNoise() {
             if (!audioCtx) return;
-            
-            // ノイズバースト
-            const bufferSize = audioCtx.sampleRate * 1.5; 
+            const bufferSize = audioCtx.sampleRate * 0.15;
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                data[i] = Math.random() * 2 - 1;
-            }
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
             const noise = audioCtx.createBufferSource();
             noise.buffer = buffer;
-
             const gain = audioCtx.createGain();
-            gain.gain.setValueAtTime(1.5, audioCtx.currentTime); 
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
-
+            gain.gain.value = 0.8;
             noise.connect(gain);
             gain.connect(audioCtx.destination);
             noise.start();
+        }
+
+        // 足音（ノイズと低音の合成）
+        function playFootstep() {
+            if (!audioCtx) return;
+            const time = audioCtx.currentTime;
             
-            // 高音の耳障りな音
+            // 低音のドン
             const osc = audioCtx.createOscillator();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(1500, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 1.0);
-            
             const oscGain = audioCtx.createGain();
-            oscGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            oscGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.0);
-            
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(100, time);
+            osc.frequency.exponentialRampToValueAtTime(20, time + 0.1);
+            oscGain.gain.setValueAtTime(0.6, time);
+            oscGain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
             osc.connect(oscGain);
             oscGain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 1.2);
+            osc.start(time);
+            osc.stop(time + 0.1);
+
+            // 床の軋み（ノイズ）
+            const bufferSize = audioCtx.sampleRate * 0.05;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const noiseFilter = audioCtx.createBiquadFilter();
+            noiseFilter.type = 'bandpass';
+            noiseFilter.frequency.value = 1000;
+            const noiseGain = audioCtx.createGain();
+            noiseGain.gain.setValueAtTime(0.2, time);
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+            noise.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+            noise.start(time);
+        }
+
+        function startFootsteps() {
+            if(footstepInterval) return;
+            let speed = 1500; // 最初はゆっくり
+            const loop = () => {
+                playFootstep();
+                speed = Math.max(400, speed - 150); // だんだん速くなる
+                footstepInterval = setTimeout(loop, speed);
+            };
+            loop();
+        }
+
+        // ノック音
+        function playKnock() {
+            if(!audioCtx) return;
+            let time = audioCtx.currentTime;
+            for(let i=0; i<3; i++) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.frequency.setValueAtTime(80, time + i*0.15);
+                osc.frequency.exponentialRampToValueAtTime(10, time + i*0.15 + 0.1);
+                gain.gain.setValueAtTime(1, time + i*0.15);
+                gain.gain.exponentialRampToValueAtTime(0.01, time + i*0.15 + 0.1);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(time + i*0.15);
+                osc.stop(time + i*0.15 + 0.1);
+            }
+        }
+
+        function playScream() {
+            if (!audioCtx) return;
+            
+            // ガラスが割れるような超高音ノイズ
+            const bufferSize = audioCtx.sampleRate * 2.5; 
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.value = 1000;
+
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(3.0, audioCtx.currentTime); 
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 2.0);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            noise.start();
+            
+            // 耳をつんざく不協和音クラスター
+            const freqs = [440, 466, 880, 932, 1760];
+            freqs.forEach(f => {
+                const osc = audioCtx.createOscillator();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(f, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(f*1.5, audioCtx.currentTime + 0.5);
+                
+                const oscGain = audioCtx.createGain();
+                oscGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+                oscGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+                
+                osc.connect(oscGain);
+                oscGain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 2.0);
+            });
+        }
+
+
+        // --- Zalgo Text 生成 ---
+        let applyZalgo = false;
+        function toZalgo(text) {
+            if(!applyZalgo) return text;
+            const zalgo_up = ['\u030d', '\u030e', '\u0304', '\u0305', '\u033f', '\u0311', '\u0306', '\u0310', '\u0352', '\u0351', '\u0300', '\u0301', '\u030b', '\u030f', '\u0312', '\u0313', '\u0314', '\u033d', '\u0309', '\u0363', '\u0364', '\u0365', '\u0366', '\u0367', '\u0368', '\u0369', '\u036a', '\u036b', '\u036c', '\u036d', '\u036e', '\u036f', '\u033e', '\u035b', '\u0346', '\u031a'];
+            const zalgo_down = ['\u0316', '\u0317', '\u0318', '\u0319', '\u031c', '\u031d', '\u031e', '\u031f', '\u0320', '\u0324', '\u0325', '\u0326', '\u0329', '\u032a', '\u032b', '\u032c', '\u032d', '\u032e', '\u032f', '\u0330', '\u0331', '\u0332', '\u0333', '\u0339', '\u033a', '\u033b', '\u033c', '\u0345', '\u0347', '\u0348', '\u0349', '\u034d', '\u034e', '\u0353', '\u0354', '\u0355', '\u0356', '\u0359', '\u035a', '\u0323'];
+            const zalgo_mid = ['\u0315', '\u031b', '\u0340', '\u0341', '\u0358', '\u0334', '\u0335', '\u0336', '\u0337', '\u0338', '\u0321', '\u0322', '\u0327', '\u0328', '\u034f', '\u035c', '\u035d', '\u035e', '\u035f', '\u0360', '\u0361', '\u0362', '\u0489'];
+            
+            let result = '';
+            for(let i=0; i<text.length; i++) {
+                result += text[i];
+                if(text[i] === ' ' || text[i] === '、' || text[i] === '。') continue; // 句読点はそのまま
+                
+                // 後半になるほど文字化けを激しくする
+                let intensity = Math.random() > 0.5 ? 2 : 1;
+                for(let j=0; j<intensity; j++) result += zalgo_up[Math.floor(Math.random() * zalgo_up.length)];
+                for(let j=0; j<intensity; j++) result += zalgo_mid[Math.floor(Math.random() * zalgo_mid.length)];
+                for(let j=0; j<intensity; j++) result += zalgo_down[Math.floor(Math.random() * zalgo_down.length)];
+            }
+            return result;
+        }
+
+        // タブタイトルのハッキング演出
+        let tabInterval = null;
+        function startTabHack() {
+            const titles = ["うしろ", "みてるよ", "たすけて", "にげられない", "ふりむいて"];
+            tabInterval = setInterval(() => {
+                document.title = titles[Math.floor(Math.random() * titles.length)];
+            }, 500);
         }
 
         // --- シナリオデータ ---
         const scenario = [
             { text: "……気づいてた？" },
+            { text: timeText + "画面を見つめているあなたに。" }, // 現実の時間を反映
             { text: "人間の目って、正面より「視界の端」のほうが、" },
             { text: "動くものに敏感に反応するようにできてるんだって。" },
             { text: "大昔、外敵から身を守るための本能の名残らしいよ。" },
@@ -471,59 +758,65 @@
             { text: "ふと視界の端をサッと横切る『黒い影』、" },
             { text: "あれって、本当にただの「目の錯覚」だと思う？" },
             { text: "……", speed: "slow" },
-            { text: "人間の脳ってすごく優秀でさ、", drone: true },
+            { text: "人間の脳ってすごく優秀でさ、", action: "flashback", drone: true },
             { text: "理解できないものや、直視したら狂ってしまうものを、" },
             { text: "無意識に「見えない」ようにフィルターをかけてるんだって。" },
             { text: "だから、視界の端っこ、" },
             { text: "そのフィルターが一番薄い部分にだけ、" },
             { text: "一瞬だけ『それ』が映り込んじゃうらしいの。" },
-            { text: "ねえ、", effect: "flicker" },
-            { text: "今、部屋の中で一人？", effect: "pulse" },
-            { text: "さっきから、", effect: "dark-text" },
-            { text: "あなたの左側の暗がり、", effect: "dark-text", speed: "slow" },
-            { text: "何か、もぞもぞ動いてない？", effect: "shake", tinnitus: true },
+            { text: "ねえ、", action: "creeping_shadow" },
+            { text: "今、部屋の中で一人？" },
+            { text: "……", action: "knock" }, // コンコンコン
+            { text: "さっきから、" },
+            { text: "あなたの左側の暗がり、", speed: "slow", action: "close_shadow" },
+            { text: "何か、もぞもぞ動いてない？", action: "footsteps", effect: "blood-text" }, // 足音開始、文字が赤黒く
             { text: "……見ないほうがいいよ。", speed: "slow" },
-            { text: "『それ』はね、", effect: "pulse" },
+            { text: "『それ』はね、", action: "tab_hack" }, // タブタイトルが狂い始める
             { text: "こっちが気づいたことに気づくと、" },
-            { text: "一気に距離を詰めてくるから。", speed: "slow", effect: "glitch" },
+            { text: "一気に距離を詰めてくるから。", speed: "slow", action: "zalgo_on" }, // ここから文字化け開始
             { text: "ほら", speed: "fast", effect: "glitch_heavy" },
-            { text: "すぐ、うしろ", speed: "fast", effect: "blood" },
+            { text: "すぐ、うしろ", speed: "fast", effect: "blood-text" },
+            { action: "fake_dialog" }, // 偽ダイアログで進行ストップ
             { jumpscare: true },
-            { text: "ふりむいたね", speed: "slow", effect: "blood", end: true }
+            { end: true }
         ];
 
-        // --- ゲーム進行ロジック ---
         let currentIndex = -1;
         let isTyping = false;
         let typeInterval;
         let isStarted = false;
         let isLocked = false;
-        let tutorialShown = false;
 
         const startBtn = document.getElementById('start-btn');
         const startScreen = document.getElementById('start-screen');
         const storyScreen = document.getElementById('story-screen');
         const msgContainer = document.getElementById('message-container');
         const indicator = document.getElementById('click-indicator');
-        const tutorial = document.getElementById('tutorial');
+        const bgLayer = document.getElementById('bg-layer');
+        const fakeDialog = document.getElementById('fake-dialog-overlay');
 
         startBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             initAudio();
             
+            // フルスクリーン要求（没入感アップ、ブラウザによっては拒否されるが試す）
+            // 権限エラー(Unhandled Promise Rejection)を防ぐため、Promiseをキャッチして無視する処理を追加
+            try { 
+                const fsPromise = document.documentElement.requestFullscreen();
+                if (fsPromise !== undefined) {
+                    fsPromise.catch((err) => { 
+                        // フルスクリーンが許可されていない環境(iframe内など)の例外を握りつぶす
+                        console.warn("Fullscreen API ignored:", err);
+                    });
+                }
+            } catch(err) {}
+
             startScreen.style.opacity = '0';
             setTimeout(() => {
                 startScreen.classList.add('hidden');
                 storyScreen.classList.remove('hidden');
                 isStarted = true;
-                
-                // チュートリアル表示
-                setTimeout(() => {
-                    if(!tutorialShown && currentIndex === 0) {
-                        tutorial.style.opacity = '1';
-                    }
-                }, 3000);
-
+                bgLayer.style.opacity = '0.3';
                 nextScenario();
             }, 2000);
         });
@@ -532,7 +825,7 @@
             if (!isStarted || isLocked) return;
 
             if (isTyping) {
-                // タイピング中のスキップ処理
+                // スキップ
                 clearInterval(typeInterval);
                 const chars = document.querySelectorAll('.char');
                 chars.forEach(c => c.style.opacity = '1');
@@ -540,23 +833,29 @@
                 indicator.style.opacity = '1';
                 return;
             }
-
-            if (!tutorialShown) {
-                tutorial.style.opacity = '0';
-                tutorialShown = true;
-            }
-
             nextScenario();
         }
 
         document.addEventListener('click', handleInteraction);
         document.addEventListener('touchstart', (e) => {
-            if (e.target.id !== 'start-btn') {
+            if (e.target.id !== 'start-btn' && !e.target.closest('.fake-dialog')) {
                 handleInteraction();
             }
         });
 
+        // 偽ダイアログのボタンイベント（どちらを押してもジャンプスケア）
+        document.getElementById('fake-block').addEventListener('click', forceJumpscare);
+        document.getElementById('fake-allow').addEventListener('click', forceJumpscare);
+
+        function forceJumpscare(e) {
+            e.stopPropagation();
+            fakeDialog.classList.add('hidden');
+            currentIndex = scenario.findIndex(s => s.jumpscare === true);
+            nextScenario();
+        }
+
         function nextScenario() {
+            if(currentIndex >= 0 && scenario[currentIndex].end) return;
             currentIndex++;
             if (currentIndex >= scenario.length) return;
 
@@ -567,59 +866,71 @@
                 return;
             }
 
+            processActions(data);
+
+            if(data.action === "fake_dialog") {
+                isLocked = true; // 進行をロック
+                fakeDialog.classList.remove('hidden');
+                document.body.style.cursor = 'default';
+                indicator.style.display = 'none';
+                return;
+            }
+
             applyEffects(data);
-            typeText(data.text, data.speed);
+            if(data.text) {
+                typeText(data.text, data.speed);
+            }
+        }
+
+        function processActions(data) {
+            if (data.drone && !currentDrone) currentDrone = playLowDrone();
+            
+            if (data.action === "flashback") {
+                playGlitchNoise();
+                const sub = document.getElementById('subliminal-screen');
+                sub.classList.add('flash');
+                setTimeout(() => sub.classList.remove('flash'), 100);
+            } 
+            else if (data.action === "creeping_shadow") {
+                document.body.classList.add('creeping');
+                bgLayer.style.opacity = '0.6';
+            }
+            else if (data.action === "knock") {
+                playKnock();
+            }
+            else if (data.action === "close_shadow") {
+                document.body.classList.add('close');
+                bgLayer.style.opacity = '0.9';
+                document.getElementById('bloody-handprint').style.opacity = '0.5';
+            }
+            else if (data.action === "footsteps") {
+                startFootsteps();
+                document.getElementById('vignette').classList.add('heartbeat-bg');
+            }
+            else if (data.action === "tab_hack") {
+                startTabHack();
+            }
+            else if (data.action === "zalgo_on") {
+                applyZalgo = true;
+            }
         }
 
         function applyEffects(data) {
-            // エフェクトリセット
-            document.body.className = '';
             msgContainer.className = '';
             
-            if (data.effect === 'shake') {
-                document.body.classList.add('shake');
-            } else if (data.effect === 'flicker') {
-                document.body.classList.add('flicker');
-            } else if (data.effect === 'glitch') {
-                msgContainer.classList.add('glitch');
-            } else if (data.effect === 'glitch_heavy') {
+            if (data.effect === 'glitch_heavy') {
                 msgContainer.classList.add('glitch_heavy');
                 document.body.classList.add('shake-heavy');
-                document.body.classList.add('dark-mode'); // 背景も暗く
-                if (currentDrone) {
-                    currentDrone.gain.gain.linearRampToValueAtTime(1.0, audioCtx.currentTime + 0.5);
-                }
-            } else if (data.effect === 'blood') {
-                msgContainer.classList.add('blood');
-                document.body.classList.add('dark-mode');
-            } else if (data.effect === 'dark-text') {
-                msgContainer.classList.add('dark-text');
-                document.body.classList.add('dark-mode'); // 視界が狭まる
-            } else if (data.effect === 'pulse') {
-                msgContainer.classList.add('pulse');
-            }
-
-            // サウンドトリガー
-            if (data.drone && !currentDrone) {
-                currentDrone = playLowDrone();
-            }
-            if (data.tinnitus && !currentTinnitus) {
-                currentTinnitus = playTinnitus();
-            }
-
-            // エンド処理
-            if (data.end) {
-                isLocked = true; // 進行ロック
-                document.body.classList.add('cursor-none');
-                indicator.style.display = 'none';
+            } else if (data.effect === 'blood-text') {
+                msgContainer.classList.add('blood-text');
             }
         }
 
-        function typeText(text, speedType) {
+        function typeText(rawText, speedType) {
+            const text = toZalgo(rawText); // 文字化け適用
             msgContainer.innerHTML = '';
-            msgContainer.setAttribute('data-text', text); // グリッチ用
-
-            const chars = text.split('');
+            
+            const chars = Array.from(text); // Zalgo文字（サロゲートペア等）を正しく分割
             chars.forEach(char => {
                 const span = document.createElement('span');
                 span.textContent = char;
@@ -645,9 +956,7 @@
                 } else {
                     clearInterval(typeInterval);
                     isTyping = false;
-                    if (!scenario[currentIndex].end) {
-                        indicator.style.opacity = '1';
-                    }
+                    indicator.style.opacity = '1';
                 }
             }, baseSpeed);
         }
@@ -656,42 +965,51 @@
             isLocked = true;
             indicator.style.opacity = '0';
             document.body.classList.add('cursor-none');
+            document.body.classList.remove('shake-heavy');
+            msgContainer.innerHTML = '';
 
-            // 静寂を作る
+            // 音を急停止
             if (currentDrone) {
-                currentDrone.gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
-                setTimeout(() => {
-                    currentDrone.osc1.stop();
-                    currentDrone.osc2.stop();
-                }, 150);
+                currentDrone.gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                currentDrone.osc1.stop();
             }
-            if (currentTinnitus) {
-                currentTinnitus.gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
-                setTimeout(() => {
-                    currentTinnitus.osc.stop();
-                }, 150);
-            }
+            if(footstepInterval) clearTimeout(footstepInterval);
+            document.getElementById('vignette').classList.remove('heartbeat-bg');
 
-            // 0.6秒の「間」の後に演出
+            // 一瞬の完全な静寂
             setTimeout(() => {
                 playScream();
                 const jsScreen = document.getElementById('jumpscare-screen');
                 jsScreen.classList.remove('hidden');
                 
-                // 0.8秒で消える
+                // ジャンプスケア後の狂気
                 setTimeout(() => {
                     jsScreen.classList.add('hidden');
-                    document.body.className = ''; // 揺れ等リセット
                     
-                    // 少し間を置いて最後のテキストへ
-                    setTimeout(() => {
-                        isLocked = false;
-                        nextScenario();
-                    }, 1000);
-                }, 800);
-            }, 600);
-        }
+                    // 背景等全て非表示
+                    document.getElementById('bg-layer').style.display = 'none';
+                    document.getElementById('left-shadow-container').style.display = 'none';
+                    document.getElementById('scanlines').style.display = 'none';
+                    document.getElementById('static-noise').style.display = 'none';
+                    document.getElementById('bloody-handprint').style.display = 'none';
+                    
+                    // 画面を「みつかった」で埋め尽くす
+                    const madText = document.getElementById('madness-text');
+                    madText.style.opacity = '1';
+                    
+                    let madInterval = setInterval(() => {
+                        madText.innerHTML += "みつかったみつかったみつかったみつかったみつかった";
+                        if(madText.innerHTML.length > 3000) clearInterval(madInterval);
+                    }, 50);
 
+                    setTimeout(() => {
+                        document.title = "💀";
+                    }, 1000);
+
+                }, 1500);
+            }, 500);
+        }
     </script>
 </body>
 </html>
+          
