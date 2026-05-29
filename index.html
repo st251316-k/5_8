@@ -1,14 +1,23 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>視界の端</title>
+    <title>視界の端 - Interactive Horror Experience</title>
+    <!-- Tailwind CSS for modern layout utilities -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for premium Japanese typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200;400;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --bg-base: #050505;
-            --text-base: #d0d0d0;
-            --accent-red: #cc0000;
+            --bg-base: #020202;
+            --text-base: #c8c8c8;
+            --accent-red: #9e0000;
+            --accent-bright-red: #ff0033;
         }
 
         body, html {
@@ -18,71 +27,38 @@
             height: 100%;
             background-color: var(--bg-base);
             color: var(--text-base);
-            font-family: 'Sawarabi Mincho', 'Yu Mincho', 'Hiragino Mincho ProN', 'Noto Serif JP', serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: 'Noto Serif JP', serif;
             overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
             cursor: default;
         }
 
-        .hidden {
-            display: none !important;
-        }
-
-        /* --- スタート画面 --- */
-        #start-screen {
+        /* --- Ambient Peripheral Canvas --- */
+        #peripheral-canvas {
             position: absolute;
             inset: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background-color: var(--bg-base);
-            z-index: 100;
-            transition: opacity 2s ease-in-out;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.75;
         }
 
-        #start-screen h1 {
-            font-weight: 300;
-            letter-spacing: 0.8em;
-            margin-bottom: 1rem;
-            color: #fff;
-            margin-left: 0.4em; /* レタースペース分の補正 */
+        /* --- Vignette overlay --- */
+        #vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.92) 100%);
+            z-index: 5;
+            pointer-events: none;
+            transition: background 4s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        #start-screen p {
-            color: #555;
-            font-size: 0.8rem;
-            margin-bottom: 3rem;
-            letter-spacing: 0.1em;
-            text-align: center;
-            line-height: 1.5;
+        .narrow-vision #vignette {
+            background: radial-gradient(circle, transparent 15%, rgba(0,0,0,0.99) 95%);
         }
 
-        #start-btn {
-            background: transparent;
-            border: 1px solid #333;
-            color: #888;
-            padding: 12px 40px;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.5s;
-            letter-spacing: 0.3em;
-            outline: none;
-        }
-
-        #start-btn:hover {
-            border-color: #fff;
-            color: #fff;
-            background: rgba(255, 255, 255, 0.05);
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
-        }
-
-        /* --- ストーリー画面 --- */
-        #story-screen {
+        /* --- Screens --- */
+        .screen-container {
             position: absolute;
             inset: 0;
             display: flex;
@@ -90,89 +66,123 @@
             justify-content: center;
             align-items: center;
             z-index: 10;
+            padding: 20px;
         }
 
+        /* --- Typing text container --- */
         #message-container {
-            font-size: clamp(1.2rem, 5vw, 1.8rem);
-            line-height: 2;
-            letter-spacing: 0.15em;
+            font-size: clamp(1.1rem, 4.5vw, 1.6rem);
+            line-height: 2.2;
+            letter-spacing: 0.18em;
             text-align: center;
-            max-width: 85%;
-            min-height: 3rem;
-            padding: 20px;
+            max-width: 800px;
+            min-height: 120px;
             position: relative;
+            z-index: 20;
+            text-shadow: 0 0 10px rgba(0,0,0,0.9);
         }
 
         .char {
             opacity: 0;
-            transition: opacity 0.1s ease-in;
+            transition: opacity 0.12s ease-out;
         }
 
+        /* --- Branching Options Buttons --- */
+        #choices-container {
+            margin-top: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+            z-index: 30;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease;
+        }
+
+        #choices-container.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .choice-btn {
+            background: rgba(10, 10, 10, 0.6);
+            border: 1px solid #222;
+            color: #aaa;
+            padding: 14px 24px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            text-align: center;
+            border-radius: 2px;
+        }
+
+        .choice-btn:hover {
+            border-color: var(--accent-red);
+            color: #fff;
+            background: rgba(158, 0, 0, 0.15);
+            box-shadow: 0 0 15px rgba(158, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* --- Indicator down-arrow --- */
         #click-indicator {
             position: absolute;
-            bottom: 15%;
-            font-size: 0.8rem;
-            color: #444;
-            animation: blink 2s infinite;
+            bottom: 12%;
+            font-size: 1rem;
+            color: #555;
+            animation: bounce-blink 2s infinite;
             opacity: 0;
             transition: opacity 0.5s;
-            letter-spacing: 0.1em;
+            z-index: 20;
         }
 
-        @keyframes blink {
-            0%, 100% { opacity: 0; }
-            50% { opacity: 1; }
+        @keyframes bounce-blink {
+            0%, 100% { opacity: 0; transform: translateY(0); }
+            50% { opacity: 1; transform: translateY(6px); }
         }
 
-        #tutorial {
-            position: absolute;
-            bottom: 10%;
-            font-size: 0.7rem;
-            color: #333;
-            letter-spacing: 0.2em;
-            opacity: 0;
-            transition: opacity 1s;
-        }
-
-        /* --- 演出用CSSクラス --- */
+        /* --- Effects classes --- */
         .shake {
-            animation: shake-anim 0.5s infinite;
+            animation: shake-anim 0.4s infinite;
         }
 
         .shake-heavy {
-            animation: shake-heavy-anim 0.1s infinite;
+            animation: shake-heavy-anim 0.08s infinite;
         }
 
         @keyframes shake-anim {
             0% { transform: translate(1px, 1px) rotate(0deg); }
-            20% { transform: translate(-1px, -2px) rotate(-1deg); }
-            40% { transform: translate(-2px, 0px) rotate(1deg); }
-            60% { transform: translate(2px, 2px) rotate(0deg); }
-            80% { transform: translate(1px, -1px) rotate(1deg); }
-            100% { transform: translate(-1px, 1px) rotate(-1deg); }
+            20% { transform: translate(-1px, -1px) rotate(-0.5deg); }
+            40% { transform: translate(-2px, 0px) rotate(0.5deg); }
+            60% { transform: translate(1px, 1px) rotate(0deg); }
+            80% { transform: translate(-1px, 1px) rotate(-0.5deg); }
+            100% { transform: translate(1px, -1px) rotate(0.5deg); }
         }
 
         @keyframes shake-heavy-anim {
-            0% { transform: translate(3px, 3px) rotate(0deg); }
-            25% { transform: translate(-4px, -3px) rotate(-2deg); }
-            50% { transform: translate(-3px, 4px) rotate(2deg); }
-            75% { transform: translate(4px, -4px) rotate(-1deg); }
-            100% { transform: translate(-3px, 3px) rotate(1deg); }
+            0% { transform: translate(3px, 2px) rotate(0deg); }
+            25% { transform: translate(-3px, -2px) rotate(-1.5deg); }
+            50% { transform: translate(-2px, 3px) rotate(1.5deg); }
+            75% { transform: translate(3px, -3px) rotate(-1deg); }
+            100% { transform: translate(-2px, 2px) rotate(1deg); }
         }
 
-        .flicker {
-            animation: flicker-anim 0.15s infinite alternate;
+        /* 改修：明滅やゆらぎによる目の疲れを防ぐため、静止した不気味な深い闇（ヴィネットの固定変化）に変更 */
+        .flicker #vignette {
+            /* 動き（animation）を廃止し、静的にヴィネットを狭めて静寂の圧迫感を出します */
+            background: radial-gradient(circle, transparent 25%, rgba(0,0,0,0.97) 100%);
+            transition: background 2s ease-in-out;
         }
 
-        @keyframes flicker-anim {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 0.9; }
-        }
-
+        /* Chromatic Aberration Glitch */
         .glitch {
             position: relative;
         }
+        /* 明滅（チカチカ）を防止するため、文字の絶え間ないChromatic Shiftを廃止し、静止した不穏な二重文字に修正 */
         .glitch::before, .glitch::after {
             content: attr(data-text);
             position: absolute;
@@ -181,25 +191,24 @@
             width: 100%;
             height: 100%;
             background: var(--bg-base);
-            opacity: 0.8;
+            opacity: 0.5;
         }
         .glitch::before {
-            left: 2px;
-            text-shadow: -1px 0 rgba(255,0,0,0.7);
-            animation: glitch-clip 2s infinite linear alternate-reverse;
+            left: 1.5px;
+            text-shadow: -1px 0 rgba(255,0,50,0.6);
         }
         .glitch::after {
-            left: -2px;
-            text-shadow: -1px 0 rgba(0,0,255,0.7);
-            animation: glitch-clip 2.5s infinite linear alternate-reverse;
+            left: -1.5px;
+            text-shadow: 1px 0 rgba(0,100,255,0.6);
         }
 
         .glitch_heavy {
             position: relative;
-            color: var(--accent-red) !important;
-            font-size: clamp(1.5rem, 6vw, 2.5rem) !important;
+            color: var(--accent-bright-red) !important;
+            font-size: clamp(1.6rem, 6.5vw, 2.8rem) !important;
             font-weight: bold;
-            transform: scale(1.1);
+            transform: scale(1.05);
+            text-shadow: 0 0 15px rgba(255,0,0,0.4);
         }
         .glitch_heavy::before, .glitch_heavy::after {
             content: attr(data-text);
@@ -211,38 +220,39 @@
             background: transparent;
         }
         .glitch_heavy::before {
-            left: 4px;
-            text-shadow: -2px 0 red;
-            animation: glitch-clip 0.1s infinite linear alternate-reverse;
+            left: 3px;
+            text-shadow: -2px 0 #ff0055;
         }
         .glitch_heavy::after {
-            left: -4px;
-            text-shadow: 2px 0 blue;
-            animation: glitch-clip 0.15s infinite linear alternate-reverse;
-        }
-
-        @keyframes glitch-clip {
-            0% { clip-path: inset(10% 0 80% 0); transform: translate(-2px, 2px); }
-            20% { clip-path: inset(80% 0 10% 0); transform: translate(2px, -2px); }
-            40% { clip-path: inset(30% 0 50% 0); transform: translate(2px, 2px); }
-            60% { clip-path: inset(50% 0 30% 0); transform: translate(-2px, -2px); }
-            80% { clip-path: inset(5% 0 90% 0); transform: translate(2px, -2px); }
-            100% { clip-path: inset(90% 0 5% 0); transform: translate(-2px, 2px); }
+            left: -3px;
+            text-shadow: 2px 0 #00ffff;
         }
 
         .blood {
-            color: var(--accent-red) !important;
+            color: var(--accent-bright-red) !important;
             font-size: clamp(2rem, 8vw, 4rem) !important;
-            text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
-            animation: drip 3s infinite ease-in-out;
+            font-weight: 700;
+            text-shadow: 0 0 30px rgba(255, 0, 50, 0.75);
         }
 
-        @keyframes drip {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(5px); }
+        .dark-text {
+            color: #383838 !important;
+            text-shadow: 0 0 8px rgba(0,0,0,1);
+        }
+        
+        .pulse {
+            /* スケールや透明度変化のチカチカを停止し、静的な影の強調のみに変更 */
+            text-shadow: 0 0 15px rgba(158,0,0,0.7);
         }
 
-        /* --- ジャンプスケア画面 --- */
+        /* --- Volume Test Elements --- */
+        #volume-display {
+            font-family: monospace;
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        /* --- Jumpscare flash screen --- */
         #jumpscare-screen {
             position: absolute;
             inset: 0;
@@ -256,178 +266,312 @@
         #scare-content {
             width: 100%;
             height: 100%;
-            background-color: #200000;
-            animation: scare-flash 0.1s infinite;
+            background-color: #120000;
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
-        @keyframes scare-flash {
-            0% { filter: invert(0) contrast(1.5) hue-rotate(0deg); }
-            50% { filter: invert(1) contrast(3) hue-rotate(90deg); }
-            100% { filter: invert(0) contrast(2) hue-rotate(0deg); }
-        }
-
+        /* 改修：ジャンプスケア時の高速ストロボ点滅（scare-flash）を完全に停止 */
         .scare-svg {
             width: 120%;
             height: 120%;
-            animation: scare-zoom 0.2s infinite alternate;
         }
 
-        @keyframes scare-zoom {
-            0% { transform: scale(1) rotate(0deg); }
-            100% { transform: scale(1.1) rotate(2deg); }
-        }
-
+        /* Utility classes */
         .cursor-none {
             cursor: none !important;
         }
-
-        /* --- 新規追加エフェクト --- */
-        #vignette {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle, transparent 60%, rgba(0,0,0,0.8) 100%);
-            z-index: 50;
-            pointer-events: none;
-            transition: background 3s ease-in-out;
-        }
-
-        .dark-mode #vignette {
-            background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.98) 100%);
-        }
-
-        .dark-text {
-            color: #444 !important;
-            text-shadow: 0 0 5px rgba(0,0,0,0.8);
-        }
-        
-        .pulse {
-            animation: pulse-anim 2s infinite alternate;
-        }
-        
-        @keyframes pulse-anim {
-            0% { opacity: 1; transform: scale(1); }
-            100% { opacity: 0.8; transform: scale(1.02); text-shadow: 0 0 10px rgba(200,0,0,0.3); }
-        }
     </style>
 </head>
-<body>
+<body class="bg-black select-none overflow-hidden">
 
+    <!-- Creeping shadow Canvas behind UI -->
+    <canvas id="peripheral-canvas"></canvas>
+
+    <!-- Dark vignette overlay -->
     <div id="vignette"></div>
 
-    <div id="start-screen">
-        <h1>視界の端</h1>
-        <p>※音量にご注意ください。<br>ヘッドフォンまたはイヤホンの着用を推奨します。</p>
-        <button id="start-btn">覗き込む</button>
+    <!-- Start & Setup Screen -->
+    <div id="start-screen" class="screen-container">
+        <h1 class="text-4xl md:text-5xl font-extralight tracking-[0.5em] mb-4 text-white ml-[0.25em] transition-all duration-1000">視界の端</h1>
+        
+        <p class="text-[#555] text-xs md:text-sm tracking-[0.12em] leading-relaxed mb-10 text-center max-w-md px-4">
+            ※音量にご注意ください。<br>
+            立体音響を使用しています。イヤホン・ヘッドホンの着用を強く推奨します。
+        </p>
+
+        <!-- Test Sound Section -->
+        <div class="flex flex-col items-center mb-10 bg-[#070707] border border-[#1a1a1a] p-5 rounded max-w-xs w-full">
+            <span class="text-[10px] tracking-widest text-[#444] uppercase mb-3">Sound Check</span>
+            <button id="test-sound-btn" class="text-xs text-[#777] hover:text-white border border-[#333] hover:border-white px-4 py-2 rounded transition-all duration-300 mb-2">
+                テスト音を鳴らす
+            </button>
+            <div id="volume-display" class="text-[10px] mt-1">Ready</div>
+        </div>
+
+        <button id="start-btn" class="bg-transparent border border-[#333] hover:border-white text-[#888] hover:text-white px-12 py-4 tracking-[0.3em] transition-all duration-500 rounded hover:bg-[rgba(255,255,255,0.03)] focus:outline-none">
+            覗き込む
+        </button>
     </div>
 
-    <div id="story-screen" class="hidden">
+    <!-- Story / Scenario Experience Screen -->
+    <div id="story-screen" class="screen-container hidden">
         <div id="message-container"></div>
+        
+        <!-- Interactive Choice Options (Hidden by default) -->
+        <div id="choices-container">
+            <!-- Populated dynamically via JS -->
+        </div>
+
         <div id="click-indicator">▼</div>
-        <div id="tutorial">タップして次へ</div>
+        <div id="tutorial" class="absolute bottom-[6%] text-[10px] text-[#333] tracking-[0.2em] opacity-0 transition-opacity duration-1000">タップして次へ</div>
     </div>
 
+    <!-- Screamer Jumpscare Screen -->
     <div id="jumpscare-screen" class="hidden">
         <div id="scare-content">
             <svg viewBox="0 0 100 100" class="scare-svg" preserveAspectRatio="none">
                 <rect width="100" height="100" fill="#050000" />
-                <!-- 闇に浮かぶ歪んだ顔のシルエット -->
-                <path d="M 15 10 C 5 30, 5 70, 25 95 C 50 110, 75 95, 85 70 C 95 40, 85 15, 60 5 C 40 -5, 25 0, 15 10 Z" fill="#000" filter="blur(1px)"/>
-                <!-- 虚ろな目 -->
-                <ellipse cx="30" cy="35" rx="8" ry="12" fill="#0a0a0a" />
-                <ellipse cx="70" cy="38" rx="7" ry="11" fill="#0a0a0a" />
-                <circle cx="30" cy="35" r="1.5" fill="#fff" opacity="0.4"/>
-                <!-- 異様に開いた口と歯 -->
-                <path d="M 30 65 Q 50 50 70 65 Q 60 95 40 90 Z" fill="#1a0000" />
-                <path d="M 32 65 L 38 75 L 45 65 L 50 80 L 55 65 L 62 76 L 68 66" stroke="#444" fill="none" stroke-width="1.5" filter="blur(0.5px)"/>
+                <!-- Shadows -->
+                <path d="M 15 10 C 5 30, 5 70, 25 95 C 50 110, 75 95, 85 70 C 95 40, 85 15, 60 5 C 40 -5, 25 0, 15 10 Z" fill="#000" />
+                <!-- Hollow Eyes -->
+                <ellipse cx="28" cy="36" rx="9" ry="14" fill="#180000" />
+                <ellipse cx="72" cy="38" rx="8" ry="13" fill="#180000" />
+                <!-- Tiny intense pinprick pupils -->
+                <circle cx="28" cy="36" r="2.2" fill="#fff" />
+                <circle cx="71" cy="38" r="2.0" fill="#fff" />
+                <!-- Jagged open mouth -->
+                <path d="M 28 62 Q 50 48 72 62 Q 62 98 38 92 Z" fill="#2a0000" />
+                <!-- Sharp distorted teeth lines -->
+                <path d="M 29 62 L 34 76 L 40 62 L 46 80 L 52 62 L 58 78 L 64 62 L 71 73" stroke="#777" fill="none" stroke-width="1.8" />
+                <path d="M 32 84 L 38 72 L 44 87 L 50 71 L 56 86 L 62 70 L 68 81" stroke="#666" fill="none" stroke-width="1.5" />
+                <!-- Blood splashes (SVG path) -->
+                <path d="M 10 10 Q 30 50 40 90 M 90 20 Q 70 60 60 100 M 5 80 Q 50 70 95 85" stroke="#ff0000" stroke-width="0.8" opacity="0.4" fill="none" />
             </svg>
         </div>
     </div>
 
     <script>
-        // --- Web Audio API サウンドシステム ---
+        // --- Web Audio API Procedural Sound Engine ---
         let audioCtx;
+        let masterGainNode;
         let currentDrone = null;
+        let currentTinnitus = null;
+        let heartbeatInterval = null;
+        let heartbeatSpeed = 800; // ms between beats
 
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                masterGainNode = audioCtx.createGain();
+                masterGainNode.gain.setValueAtTime(0.8, audioCtx.currentTime);
+                masterGainNode.connect(audioCtx.destination);
             }
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
         }
 
-        // タイプライターのような小さなカチッという音
+        // Clicky typewriter feedback
         function playTypeSound() {
             if (!audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.03);
             
-            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
+            // Randomize pitch slightly for organic typing feel
+            const pitch = 700 + Math.random() * 200;
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(pitch, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.02);
+            
+            gain.gain.setValueAtTime(0.012, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.02);
             
             osc.connect(gain);
-            gain.connect(audioCtx.destination);
+            gain.connect(masterGainNode);
             osc.start();
-            osc.stop(audioCtx.currentTime + 0.03);
+            osc.stop(audioCtx.currentTime + 0.02);
         }
 
-        // 不気味な低音（うなり）
+        // Test Sound for User Config
+        const testSoundBtn = document.getElementById('test-sound-btn');
+        const volDisplay = document.getElementById('volume-display');
+        testSoundBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            initAudio();
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+            
+            osc.connect(gain);
+            gain.connect(masterGainNode);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.6);
+            
+            volDisplay.innerText = "OK - 適正な音量です";
+            volDisplay.style.color = "#777";
+        });
+
+        // Stereo spatial dark drone
         function playLowDrone() {
             if (!audioCtx) return null;
+            
             const osc1 = audioCtx.createOscillator();
             const osc2 = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
+            const panner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
             
             osc1.type = 'sine';
-            osc2.type = 'sine';
-            osc1.frequency.setValueAtTime(40, audioCtx.currentTime); // より低く圧迫感のある音へ
-            osc2.frequency.setValueAtTime(41.5, audioCtx.currentTime); // うなりをゆっくりに
+            osc2.type = 'sawtooth'; // Slightly harsher waveform for pressure
             
-            osc1.connect(gain);
-            osc2.connect(gain);
-            gain.connect(audioCtx.destination);
+            osc1.frequency.setValueAtTime(36, audioCtx.currentTime); // Low subsonic rumble
+            osc2.frequency.setValueAtTime(36.8, audioCtx.currentTime); // Beat frequency oscillations
+            
+            // Lowpass filter to muffle the sawtooth harshness
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(80, audioCtx.currentTime);
+            
+            osc1.connect(filter);
+            osc2.connect(filter);
+            
+            if (panner) {
+                filter.connect(panner);
+                panner.connect(gain);
+                panner.pan.setValueAtTime(0, audioCtx.currentTime); // Centered drone initially
+            } else {
+                filter.connect(gain);
+            }
+            
+            gain.connect(masterGainNode);
             
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 5);
+            gain.gain.linearRampToValueAtTime(0.35, audioCtx.currentTime + 4);
             
             osc1.start();
             osc2.start();
-            return { osc1, osc2, gain };
+            
+            return { osc1, osc2, gain, panner };
         }
 
-        // 高音の耳鳴り（後半用）
+        // Distant scratching/whispering (Stereo panned to the left)
+        function playLeftScratch() {
+            if (!audioCtx) return;
+            
+            const bufferSize = audioCtx.sampleRate * 2; // 2 seconds of noise
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            // Generate bandpassed crackling noise
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            noise.loop = true;
+            
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+            filter.Q.setValueAtTime(3, audioCtx.currentTime);
+            
+            const gain = audioCtx.createGain();
+            const panner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
+            
+            noise.connect(filter);
+            
+            if (panner) {
+                filter.connect(panner);
+                panner.connect(gain);
+                // Pan far left (-0.85) to creepily whisper directly in the user's left ear
+                panner.pan.setValueAtTime(-0.85, audioCtx.currentTime);
+            } else {
+                filter.connect(gain);
+            }
+            
+            gain.connect(masterGainNode);
+            
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 2);
+            
+            noise.start();
+            
+            // Return handle to fade/stop later
+            return { noise, gain };
+        }
+
+        // High pitch pressure (Tinnitus effect)
         function playTinnitus() {
             if (!audioCtx) return null;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(8000, audioCtx.currentTime);
-            
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(8500, audioCtx.currentTime);
             
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 8);
+            gain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 6);
+            
+            osc.connect(gain);
+            gain.connect(masterGainNode);
             
             osc.start();
             return { osc, gain };
         }
-        
-        let currentTinnitus = null;
 
-        // ジャンプスケア時の爆音
+        // Synthesized heartbeat thump
+        function startHeartbeat() {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            
+            const triggerBeat = () => {
+                if (!audioCtx) return;
+                
+                // Double thump of standard pulse
+                const playThump = (timeOffset, vol) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(55, audioCtx.currentTime + timeOffset);
+                    osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + timeOffset + 0.15);
+                    
+                    gain.gain.setValueAtTime(vol, audioCtx.currentTime + timeOffset);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + timeOffset + 0.18);
+                    
+                    osc.connect(gain);
+                    gain.connect(masterGainNode);
+                    osc.start(audioCtx.currentTime + timeOffset);
+                    osc.stop(audioCtx.currentTime + timeOffset + 0.2);
+                };
+                
+                // Thump-thump
+                playThump(0, 0.4);
+                playThump(0.15, 0.25);
+            };
+
+            triggerBeat();
+            heartbeatInterval = setInterval(triggerBeat, heartbeatSpeed);
+        }
+
+        function stopHeartbeat() {
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+                heartbeatInterval = null;
+            }
+        }
+
+        // Terrifying synthesis for the jumpscare
         function playScream() {
             if (!audioCtx) return;
             
-            // ノイズバースト
-            const bufferSize = audioCtx.sampleRate * 1.5; 
+            // 1. Harsh White Noise Explosion
+            const bufferSize = audioCtx.sampleRate * 2.0; 
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const data = buffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) {
@@ -436,69 +580,251 @@
             const noise = audioCtx.createBufferSource();
             noise.buffer = buffer;
 
-            const gain = audioCtx.createGain();
-            gain.gain.setValueAtTime(1.5, audioCtx.currentTime); 
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+            const noiseFilter = audioCtx.createBiquadFilter();
+            noiseFilter.type = 'peaking';
+            noiseFilter.frequency.setValueAtTime(2000, audioCtx.currentTime);
+            noiseFilter.Q.setValueAtTime(1.0, audioCtx.currentTime);
 
-            noise.connect(gain);
-            gain.connect(audioCtx.destination);
+            const noiseGain = audioCtx.createGain();
+            noiseGain.gain.setValueAtTime(1.6, audioCtx.currentTime); 
+            noiseGain.gain.exponentialRampToValueAtTime(0.005, audioCtx.currentTime + 1.5);
+
+            noise.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(masterGainNode);
             noise.start();
+
+            // 2. Rising metallic FM screamer
+            const oscMod = audioCtx.createOscillator();
+            const oscCar = audioCtx.createOscillator();
+            const fmGain = audioCtx.createGain();
+            const carGain = audioCtx.createGain();
+
+            oscMod.frequency.setValueAtTime(320, audioCtx.currentTime);
+            oscCar.frequency.setValueAtTime(1200, audioCtx.currentTime);
             
-            // 高音の耳障りな音
-            const osc = audioCtx.createOscillator();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(1500, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 1.0);
+            // Dramatic pitch descend to simulate depth / fall
+            oscCar.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 1.2);
+
+            fmGain.gain.setValueAtTime(800, audioCtx.currentTime);
+            fmGain.gain.exponentialRampToValueAtTime(10, audioCtx.currentTime + 1.2);
+
+            oscMod.connect(fmGain);
+            fmGain.connect(oscCar.frequency);
             
-            const oscGain = audioCtx.createGain();
-            oscGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            oscGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.0);
-            
-            osc.connect(oscGain);
-            oscGain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 1.2);
+            oscCar.connect(carGain);
+            carGain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+            carGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.4);
+
+            carGain.connect(masterGainNode);
+
+            oscMod.start();
+            oscCar.start();
+            oscMod.stop(audioCtx.currentTime + 1.5);
+            oscCar.stop(audioCtx.currentTime + 1.5);
         }
 
-        // --- シナリオデータ ---
+
+        // --- Creeping Peripheral Shadow System (Canvas) ---
+        const canvas = document.getElementById('peripheral-canvas');
+        const ctx = canvas.getContext('2d');
+        let shadowEntities = [];
+        let canvasActive = false;
+        let shadowIntensity = 1.0;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class ShadowBlob {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                // Determine which border to spawn near (Top, Bottom, Left, Right)
+                const border = Math.floor(Math.random() * 4);
+                const margin = 50; // Distance inside screen edge
+                
+                if (border === 0) { // Top
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * margin;
+                } else if (border === 1) { // Bottom
+                    this.x = Math.random() * canvas.width;
+                    this.y = canvas.height - Math.random() * margin;
+                } else if (border === 2) { // Left
+                    this.x = Math.random() * margin;
+                    this.y = Math.random() * canvas.height;
+                } else { // Right
+                    this.x = canvas.width - Math.random() * margin;
+                    this.y = Math.random() * canvas.height;
+                }
+
+                this.size = 60 + Math.random() * 120;
+                this.targetSize = this.size;
+                // 改修：画面全体が絶えず動き続けるのを防ぐため、影自体の微細な動的スピードをゼロ（静止）に設定
+                this.speedX = 0;
+                this.speedY = 0;
+                this.alpha = 0;
+                this.targetAlpha = 0.04 + Math.random() * 0.08;
+                // ゆらゆら動くPulse処理も停止
+                this.pulseRate = 0;
+                this.pulsePhase = Math.random() * Math.PI;
+            }
+
+            update(mouseX, mouseY) {
+                // Move slowly (0なので静止)
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                // Gradual fade in
+                if (this.alpha < this.targetAlpha) {
+                    this.alpha += 0.002;
+                }
+
+                // Check distance from user cursor or touch point
+                const dx = this.x - mouseX;
+                const dy = this.y - mouseY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                // インタラクティブな反応（ユーザーの目線・マウスが近づいた際のスムーズな退散挙動）のみ保持
+                if (dist < 250) {
+                    this.alpha -= 0.015; // Fast fade out
+                    this.x += (dx / dist) * 4;
+                    this.y += (dy / dist) * 4;
+                }
+
+                // Out of bounds reset
+                if (this.x < -100 || this.x > canvas.width + 100 || this.y < -100 || this.y > canvas.height + 100 || this.alpha <= 0) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                if (this.alpha <= 0) return;
+                
+                // Render blurry dark vapor
+                const grad = ctx.createRadialGradient(this.x, this.y, 5, this.x, this.y, this.size);
+                grad.addColorStop(0, `rgba(0, 0, 0, ${this.alpha * shadowIntensity})`);
+                grad.addColorStop(0.5, `rgba(2, 0, 0, ${this.alpha * 0.5 * shadowIntensity})`);
+                grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Initialize shadow blobs
+        for (let i = 0; i < 8; i++) {
+            shadowEntities.push(new ShadowBlob());
+        }
+
+        let mousePosition = { x: -1000, y: -1000 };
+        document.addEventListener('mousemove', (e) => {
+            mousePosition.x = e.clientX;
+            mousePosition.y = e.clientY;
+        });
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                mousePosition.x = e.touches[0].clientX;
+                mousePosition.y = e.touches[0].clientY;
+            }
+        });
+
+        function animateShadows() {
+            if (!canvasActive) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            shadowEntities.forEach(s => {
+                s.update(mousePosition.x, mousePosition.y);
+                s.draw();
+            });
+
+            requestAnimationFrame(animateShadows);
+        }
+
+
+        // --- Scenario Data & Interactive Script ---
+        // A complete narrative with dynamic choices & procedural modifiers
         const scenario = [
-            { text: "……気づいてた？" },
-            { text: "人間の目って、正面より「視界の端」のほうが、" },
-            { text: "動くものに敏感に反応するようにできてるんだって。" },
-            { text: "大昔、外敵から身を守るための本能の名残らしいよ。" },
-            { text: "でもね、" },
-            { text: "今の安全な部屋の中で、" },
-            { text: "ふと視界の端をサッと横切る『黒い影』、" },
-            { text: "あれって、本当にただの「目の錯覚」だと思う？" },
+            { text: "……気づいていましたか？" },
+            { text: "人間の瞳は、正面よりも「視界の端」のほうが、" },
+            { text: "動くものに対して敏感に反応するように設計されています。" },
+            { text: "それは遥か昔、外敵から即座に身を護るための、太古の本能の名残。" },
+            { text: "ですが、" },
+            { text: "今あなたが座っている、その静かな部屋の中で……" },
+            { text: "ふと視界の端を、サッと横切る『黒い影』。" },
+            { text: "あれは、本当にただの「目の錯覚」でしょうか？" },
             { text: "……", speed: "slow" },
-            { text: "人間の脳ってすごく優秀でさ、", drone: true },
-            { text: "理解できないものや、直視したら狂ってしまうものを、" },
-            { text: "無意識に「見えない」ようにフィルターをかけてるんだって。" },
-            { text: "だから、視界の端っこ、" },
-            { text: "そのフィルターが一番薄い部分にだけ、" },
-            { text: "一瞬だけ『それ』が映り込んじゃうらしいの。" },
-            { text: "ねえ、", effect: "flicker" },
-            { text: "今、部屋の中で一人？", effect: "pulse" },
-            { text: "さっきから、", effect: "dark-text" },
-            { text: "あなたの左側の暗がり、", effect: "dark-text", speed: "slow" },
-            { text: "何か、もぞもぞ動いてない？", effect: "shake", tinnitus: true },
-            { text: "……見ないほうがいいよ。", speed: "slow" },
-            { text: "『それ』はね、", effect: "pulse" },
-            { text: "こっちが気づいたことに気づくと、" },
-            { text: "一気に距離を詰めてくるから。", speed: "slow", effect: "glitch" },
-            { text: "ほら", speed: "fast", effect: "glitch_heavy" },
-            { text: "すぐ、うしろ", speed: "fast", effect: "blood" },
+            { text: "人間の脳は極めて有能で、時にあまりにも残酷です。", drone: true, heartbeat: 700 },
+            { text: "理解が追いつかない異常な存在や、直視すれば精神が崩壊するものを、" },
+            { text: "無意識のフィルターで、最初から「無かったこと」として処理します。" },
+            { text: "だからこそ、意識を集中させていない領域……" },
+            { text: "その脳内フィルターが最も薄れる「視界の端」にだけ、" },
+            { text: "一瞬、不純物のように『それ』が映り込んでしまうのです。" },
+            
+            // Branch Choice 1
+            {
+                text: "……聞いてみますが、あなたは今、本当に一人きりですか？",
+                choices: [
+                    { label: "はい、一人だけです", nextIndex: 16 },
+                    { label: "……わからない", nextIndex: 18 }
+                ]
+            },
+
+            // Path A
+            { text: "そうですか、一人ですか。ならば好都合ですね……。", effect: "pulse" },
+            { text: "誰も、あなたを助けることはできないのだから。", jumpTo: 20, speed: "slow", effect: "dark-text" },
+
+            // Path B
+            { text: "「わからない」……。極めて賢明な、そこで不吉な直感です。", effect: "pulse" },
+            { text: "気づかぬうちに、境界線が曖昧になっている証拠ですから。", jumpTo: 20, speed: "slow", effect: "dark-text" },
+
+            // Continuation
+            { text: "ねえ。さっきから、耳鳴りのような、微かな摩擦音が聞こえませんか？", effect: "flicker", leftScratch: true },
+            { text: "あなたの左側……手が届くほど近い、あの暗がりの中で。", effect: "dark-text", speed: "slow" },
+            
+            // Branch Choice 2
+            {
+                text: "何か、黒いものがもぞもぞと親り寄ってきていませんか？",
+                choices: [
+                    { label: "恐怖に耐えて、左を見る", nextIndex: 24 },
+                    { label: "絶対に、左は見ない", nextIndex: 27 }
+                ]
+            },
+
+            // Choice 2-A: Look Left (Early warning / tense buildup)
+            { text: "っ、バカ！ 見ちゃダメだと言ったのに！！", speed: "fast", effect: "shake", tinnitus: true, heartbeat: 400 },
+            { text: "……いや、まだギリギリ視線を外せば間に合うかもしれない。", speed: "slow", effect: "flicker" },
+            { text: "息を殺して、そのままゆっくり正面に顔を戻してください……。", speed: "slow", jumpTo: 29 },
+
+            // Choice 2-B: Don't look (Psychological pressure)
+            { text: "正しい選択です。絶対に顔をそちらに向けてはならない。", effect: "pulse", heartbeat: 500, tinnitus: true },
+            { text: "『それ』はね、自分の存在を自覚されたと気づいた瞬間, ", speed: "slow" },
+            { text: "物理的な距離を一気に削り取ってきますから。", speed: "slow", effect: "dark-text" },
+
+            // Re-converge
+            { text: "見つめないで。信じないで。意識しないで。", speed: "slow", effect: "pulse" },
+            { text: "あなたの背後で、衣服が擦れる、かすかな音がしたとしても。", speed: "slow", effect: "glitch" },
+            { text: "ほら。", speed: "fast", effect: "glitch_heavy", heartbeat: 300 },
+            { text: "もう、すぐそこ。", speed: "fast", effect: "blood" },
             { jumpscare: true },
-            { text: "ふりむいたね", speed: "slow", effect: "blood", end: true }
+            { text: "……ふりむいたね。", speed: "slow", effect: "blood", end: true }
         ];
 
-        // --- ゲーム進行ロジック ---
+        // --- Game Flow Controllers ---
         let currentIndex = -1;
         let isTyping = false;
         let typeInterval;
         let isStarted = false;
         let isLocked = false;
         let tutorialShown = false;
+        let leftScratchNode = null;
 
         const startBtn = document.getElementById('start-btn');
         const startScreen = document.getElementById('start-screen');
@@ -506,6 +832,7 @@
         const msgContainer = document.getElementById('message-container');
         const indicator = document.getElementById('click-indicator');
         const tutorial = document.getElementById('tutorial');
+        const choicesContainer = document.getElementById('choices-container');
 
         startBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -516,28 +843,37 @@
                 startScreen.classList.add('hidden');
                 storyScreen.classList.remove('hidden');
                 isStarted = true;
+                canvasActive = true;
                 
-                // チュートリアル表示
+                // Spawn dynamic shadows crawling
+                animateShadows();
+
+                // Simple tap tutorial fade-in
                 setTimeout(() => {
                     if(!tutorialShown && currentIndex === 0) {
-                        tutorial.style.opacity = '1';
+                        tutorial.style.opacity = '0.5';
                     }
-                }, 3000);
+                }, 3500);
 
                 nextScenario();
-            }, 2000);
+            }, 1500);
         });
 
         function handleInteraction() {
             if (!isStarted || isLocked) return;
 
+            // Typewriter skip feature
             if (isTyping) {
-                // タイピング中のスキップ処理
                 clearInterval(typeInterval);
                 const chars = document.querySelectorAll('.char');
                 chars.forEach(c => c.style.opacity = '1');
                 isTyping = false;
-                indicator.style.opacity = '1';
+                
+                // Show click indicator if this scene doesn't have branching choices
+                const data = scenario[currentIndex];
+                if (!data.choices) {
+                    indicator.style.opacity = '1';
+                }
                 return;
             }
 
@@ -549,11 +885,15 @@
             nextScenario();
         }
 
-        document.addEventListener('click', handleInteraction);
+        document.addEventListener('click', (e) => {
+            // Guard to avoid triggers on choice button clicks
+            if (e.target.classList.contains('choice-btn') || e.target.id === 'test-sound-btn') return;
+            handleInteraction();
+        });
+
         document.addEventListener('touchstart', (e) => {
-            if (e.target.id !== 'start-btn') {
-                handleInteraction();
-            }
+            if (e.target.classList.contains('choice-btn') || e.target.id === 'test-sound-btn' || e.target.id === 'start-btn') return;
+            handleInteraction();
         });
 
         function nextScenario() {
@@ -568,56 +908,74 @@
             }
 
             applyEffects(data);
-            typeText(data.text, data.speed);
+            typeText(data.text, data.speed, data.choices);
         }
 
         function applyEffects(data) {
-            // エフェクトリセット
-            document.body.className = '';
-            msgContainer.className = '';
-            
+            // Reset basic ambient classes
+            document.body.className = "bg-black select-none overflow-hidden";
+            msgContainer.className = "";
+            document.getElementById('story-screen').classList.remove('narrow-vision');
+            shadowIntensity = 1.0;
+
+            // Custom scenario effects mapping
             if (data.effect === 'shake') {
                 document.body.classList.add('shake');
+            } else if (data.effect === 'shake-heavy') {
+                document.body.classList.add('shake-heavy');
             } else if (data.effect === 'flicker') {
-                document.body.classList.add('flicker');
+                // 改修：ヴィネット（外周の影）を静的な不気味な深い闇に変更（動きを完全に停止）
+                document.getElementById('story-screen').classList.add('flicker');
             } else if (data.effect === 'glitch') {
                 msgContainer.classList.add('glitch');
             } else if (data.effect === 'glitch_heavy') {
                 msgContainer.classList.add('glitch_heavy');
                 document.body.classList.add('shake-heavy');
-                document.body.classList.add('dark-mode'); // 背景も暗く
+                document.getElementById('story-screen').classList.add('narrow-vision');
+                shadowIntensity = 3.0; // Intensify shadows creeping
+                
                 if (currentDrone) {
-                    currentDrone.gain.gain.linearRampToValueAtTime(1.0, audioCtx.currentTime + 0.5);
+                    currentDrone.gain.gain.linearRampToValueAtTime(0.85, audioCtx.currentTime + 0.4);
                 }
             } else if (data.effect === 'blood') {
                 msgContainer.classList.add('blood');
-                document.body.classList.add('dark-mode');
+                document.getElementById('story-screen').classList.add('narrow-vision');
+                shadowIntensity = 4.0;
             } else if (data.effect === 'dark-text') {
                 msgContainer.classList.add('dark-text');
-                document.body.classList.add('dark-mode'); // 視界が狭まる
+                document.getElementById('story-screen').classList.add('narrow-vision');
+                shadowIntensity = 2.5;
             } else if (data.effect === 'pulse') {
                 msgContainer.classList.add('pulse');
             }
 
-            // サウンドトリガー
+            // Audio trigger nodes
             if (data.drone && !currentDrone) {
                 currentDrone = playLowDrone();
+            }
+            if (data.leftScratch && !leftScratchNode) {
+                leftScratchNode = playLeftScratch();
             }
             if (data.tinnitus && !currentTinnitus) {
                 currentTinnitus = playTinnitus();
             }
+            if (data.heartbeat) {
+                heartbeatSpeed = data.heartbeat;
+                startHeartbeat();
+            }
 
-            // エンド処理
+            // Lock input if ending
             if (data.end) {
-                isLocked = true; // 進行ロック
+                isLocked = true;
                 document.body.classList.add('cursor-none');
                 indicator.style.display = 'none';
+                stopHeartbeat();
             }
         }
 
-        function typeText(text, speedType) {
+        function typeText(text, speedType, choices) {
             msgContainer.innerHTML = '';
-            msgContainer.setAttribute('data-text', text); // グリッチ用
+            msgContainer.setAttribute('data-text', text); // Attributes for glitch mapping
 
             const chars = text.split('');
             chars.forEach(char => {
@@ -629,10 +987,12 @@
 
             isTyping = true;
             indicator.style.opacity = '0';
+            choicesContainer.classList.remove('active');
+            choicesContainer.innerHTML = '';
 
-            let baseSpeed = 80;
-            if (speedType === 'slow') baseSpeed = 200;
-            if (speedType === 'fast') baseSpeed = 40;
+            let baseSpeed = 50;
+            if (speedType === 'slow') baseSpeed = 120;
+            if (speedType === 'fast') baseSpeed = 25;
 
             let i = 0;
             const spans = document.querySelectorAll('.char');
@@ -645,11 +1005,53 @@
                 } else {
                     clearInterval(typeInterval);
                     isTyping = false;
-                    if (!scenario[currentIndex].end) {
+                    
+                    if (choices) {
+                        displayChoices(choices);
+                    } else if (!scenario[currentIndex].end) {
                         indicator.style.opacity = '1';
                     }
                 }
             }, baseSpeed);
+        }
+
+        function displayChoices(choices) {
+            isLocked = true; // Lock proceeding via generic clicks
+            indicator.style.opacity = '0';
+            
+            choicesContainer.innerHTML = '';
+            choices.forEach(ch => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.innerText = ch.label;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    makeChoice(ch);
+                });
+                choicesContainer.appendChild(btn);
+            });
+            
+            choicesContainer.classList.add('active');
+        }
+
+        function makeChoice(choice) {
+            choicesContainer.classList.remove('active');
+            isLocked = false;
+            
+            // Clean left scratching if user selected left and triggered warning path
+            if (leftScratchNode) {
+                leftScratchNode.gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.0);
+                setTimeout(() => {
+                    if (leftScratchNode) {
+                        leftScratchNode.noise.stop();
+                        leftScratchNode = null;
+                    }
+                }, 1100);
+            }
+
+            // Adjust index sequence based on branching
+            currentIndex = choice.nextIndex - 1; // offset next scenario increments
+            nextScenario();
         }
 
         function triggerJumpscare() {
@@ -657,41 +1059,51 @@
             indicator.style.opacity = '0';
             document.body.classList.add('cursor-none');
 
-            // 静寂を作る
+            // Abrupt hollow silence right before the flash (scary sensory transition)
+            stopHeartbeat();
             if (currentDrone) {
-                currentDrone.gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+                currentDrone.gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
                 setTimeout(() => {
-                    currentDrone.osc1.stop();
-                    currentDrone.osc2.stop();
-                }, 150);
+                    if (currentDrone) {
+                        currentDrone.osc1.stop();
+                        currentDrone.osc2.stop();
+                    }
+                }, 100);
             }
             if (currentTinnitus) {
-                currentTinnitus.gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+                currentTinnitus.gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
                 setTimeout(() => {
-                    currentTinnitus.osc.stop();
-                }, 150);
+                    if (currentTinnitus) {
+                        currentTinnitus.osc.stop();
+                    }
+                }, 100);
             }
 
-            // 0.6秒の「間」の後に演出
+            // 0.5s absolute hollow pause
             setTimeout(() => {
                 playScream();
                 const jsScreen = document.getElementById('jumpscare-screen');
                 jsScreen.classList.remove('hidden');
                 
-                // 0.8秒で消える
+                // Keep jumpscare flash active for 0.9s
                 setTimeout(() => {
                     jsScreen.classList.add('hidden');
-                    document.body.className = ''; // 揺れ等リセット
+                    document.body.className = "bg-black select-none overflow-hidden";
                     
-                    // 少し間を置いて最後のテキストへ
+                    // Proceed to final chilling epilogue lines
                     setTimeout(() => {
                         isLocked = false;
+                        
+                        // Set current sequence straight to ending text index
+                        // Find the ending scenario index dynamically
+                        const endIdx = scenario.findIndex(s => s.end);
+                        currentIndex = endIdx - 1;
+                        
                         nextScenario();
-                    }, 1000);
-                }, 800);
-            }, 600);
+                    }, 1200);
+                }, 900);
+            }, 500);
         }
-
     </script>
 </body>
 </html>
